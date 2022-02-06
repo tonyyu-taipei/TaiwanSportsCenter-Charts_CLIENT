@@ -1,6 +1,7 @@
-# 北部運動中心健身房圖表查詢系統（客戶端）
+# 運動中心健身房圖表查詢系統（客戶端）
 
 [系統網址](https://tonyyu.taipei/gym-stats)
+[Changelog與Known Bugs](https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F)
 
 網站架構含此客戶端、Sails.js後端與每15分鐘將資料抓取到資料庫之程式（三程式）
 

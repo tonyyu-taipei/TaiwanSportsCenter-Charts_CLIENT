@@ -14,8 +14,10 @@
         <b-datepicker
           placeholder="Click to select..."
           :min-date="minDate"
+          :mobile-native="false"
           :max-date="maxDate"
           v-model="selectedDate"
+          :unselectable-dates="checkBanned"
           @input="clearChart('date')"
           :disable="dateChoose"
         >
@@ -40,7 +42,7 @@
         <!--  <div id='resource' v-show="showResource">
             <a href="http://www.sporetrofit.com">智聯運動科技</a><br><a href="https://tycsc.cyc.org.tw">桃園國民運動中心</a><br><a href="https://lkcsc.cyc.org.tw">林口國民運動中心</a>
           </div>-->
-         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">Ver. 2022-02-01.2</a>
+         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">Ver. 2022-02-06</a>
     </div>
     </div>
 
@@ -78,6 +80,7 @@ import Buefy from "buefy";
 import axios from "axios";
 import LineChart from "./components/LineChart";
 import "buefy/dist/buefy.css";
+import subDays from 'date-fns/subDays';
 const apiUrl = "https://tonyyu.taipei:1337"
 Vue.use(Buefy,{
     defaultIconComponent: 'vue-fontawesome',
@@ -197,6 +200,13 @@ export default {
             }
 },
   methods: {
+    checkBanned(days){
+      this.bannedDays.forEach(data=>{
+        if(`${new Date(data).getMonth()+1}/${new Date(data).getDate()}`==`${new Date(days).getMonth()+1}/${new Date(days).getDate()}`){
+          return false
+        }
+      })
+    },
     toggleResource(){
       this.showResource = !this.showResource;
     },
@@ -249,7 +259,7 @@ export default {
     getAllLocations() {
 
       this.isLoading = true;
-      axios.get(`${apiUrl}/data/locations`).then((res) => {
+      axios.get(`${apiUrl}/locations`).then((res) => {
         this.isLoading=false;
         res.data.forEach((location) => {
           this.locations.push(location.name);
@@ -311,10 +321,21 @@ export default {
        let res = await axios.get(`${apiUrl}/data/date`, {
           params: { date: this.selectedDate },
         })
-                
+        
           return new Promise(resolve =>{
           setTimeout(async() =>{
                 let resData = res.data;
+                if(resData.length === 0 ){
+                  this.$buefy.notification.open({
+                      type: 'is-warning',
+                      position:'is-bottom-right',
+                      pauseOnHover:true,
+                      message:'此日期無資料'
+                    })
+                    this.isLoading = false;
+                    this.showChart = true;
+                    return 0;
+                }
                 resData.forEach(async(input) => { /*
                 伺服器這時候回傳的數值會是[{time:new Date();locationPeople:[];id:id}
                 ]
@@ -339,7 +360,6 @@ export default {
 
                 }
                 else{
-                  console.log(this.chartID)
                   this.chartData.datasets[this.chartID].borderColor = this.colorTemplate[this.chartID];
                 }
                 let addedIn = false;
@@ -393,18 +413,19 @@ export default {
                       break;
                     }
                   }
-              if(this.predict && (this.selectedDate.getDate() == new Date().getDate())&&(new Date().getHours()<=21 )){
+              if(this.predict && this.showPredict && (new Date(this.selectedDate).getDate() == new Date().getDate())&&(new Date().getHours()<=21 )){
                  let setPredictDays = [];
                 this.allDate.forEach(data=>{
         
                   for(let i = 1 ; i<=3;i++){
                     for(let ban of this.bannedDays){
-                    if(`${new Date(ban).getMonth()}/${new Date(ban).getDate()}`==`${new Date(new Date(this.selectedDate).getDate()-(7*i)).getMonth()}/${new Date(this.selectedDate).getDate()-(7*i)}`){
+                    if(`${new Date(ban).getMonth()+1}/${new Date(ban).getDate()}`==`${subDays(this.selectedDate,i*7).getMonth()+1}}/${subDays(this.selectedDate,i*7).getDate()}`){
                       this.showPredict = false;
+                      this.predict = false;
                     break;
                     }
-                    if(new Date(data).getDate() == (new Date(this.selectedDate).getDate()-(7*i))&&(new Date(setPredictDays[i-1]).getDate() != new Date(data).getDate())){
-                    setPredictDays.push(data);
+                    if(new Date(data).getDate() == subDays(this.selectedDate,7*i).getDate()&&(new Date(setPredictDays[i-1]).getDate() != new Date(data).getDate())){
+                    setPredictDays[i-1] = data;
                     }
                   }
                   }
@@ -425,6 +446,7 @@ export default {
                          predictMainData.push(res2.data); //在這裡將欲預測資料push進predictMainData中，0第一週 1第二週 2第三週
                          if(predictMainData.length == setPredictDays.length){
                             resolve();
+                            
                          }
                       })
                     }
@@ -469,8 +491,10 @@ export default {
                     for(let a = 0;a<processedData[0].length;a++){
                         var estPeo = 0;
                         for(let i = 0;i < processedData.length;i++){
-                          estPeo += processedData[i][a].locationPeople[this.selShortID].peoNum;
+                          estPeo += parseInt(processedData[i][a].locationPeople[this.selShortID].peoNum);
                         }
+                        console.log("Array Counts:"+processedData.length)
+                        console.log("Est. Poeple:"+estPeo)
                         estPeo = estPeo / processedData.length;
                         this.chartData.datasets[this.chartID].borderDash = [8,5] //點狀圖
                         if(a != 0){
@@ -544,31 +568,37 @@ export default {
           ... this.chartData
         }
       }
-      if(type=='date' && (new Date(this.selectedDate.getDate()).getTime() >= new Date(this.minDate.getDate()).getTime()) && new Date(this.selectedDate.getDate()).getTime()<= new Date(this.maxDate.getDate()).getTime()){
-        if(new Date().getDate()!=this.selectedDate.getDate()){
+      if(type=='date' && (new Date(this.selectedDate).getTime() >= new Date(this.minDate).getTime()) && new Date(this.selectedDate).getTime()<= new Date(this.maxDate).getTime()){
+        if(new Date().getDate()!=new Date(this.selectedDate).getDate()){
             this.showPredict = false
-          }else if(new Date().getTime()< 21){
+            this.predict = false
+          }else if(new Date().getHours()< 21){
               for(let ban of this.bannedDays){
                     if(`${new Date(ban).getMonth()}/${new Date(ban).getDate()}`==`${new Date(new Date(this.selectedDate).getDate())}/${new Date(this.selectedDate).getDate()}`){
                       this.showPredict = false;
+                      this.predict = false;
                 
                     break;
                     }else{
                       this.showPredict = true;
+                      this.predict = true;
                     }
               }
-          }else if(new Date().getTime()==21 && new Date().getMinutes() < 45){
+          }else if(new Date().getHours()==21 && new Date().getMinutes() < 45){
               for(let ban of this.bannedDays){
                     if(`${new Date(ban).getMonth()}/${new Date(ban).getDate()}`==`${new Date(new Date(this.selectedDate).getDate()).getMonth()}/${new Date(this.selectedDate).getDate()}`){
                       this.showPredict = false;
+                      this.predict = false
                     break;
                     }else{
                       this.showPredict = true;
+                      this.predict = true;
                     }
               }
-          this.showPredict = true;
+          //this.showPredict = true;
           }else{
           this.showPredict = false;
+          this.predict = false
           }
       
 
