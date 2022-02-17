@@ -33,7 +33,6 @@
           <b-button type="is-danger" style="" v-if="clearToggle" @click="clearChart('all')"><b-icon
                 icon="trash-alt"
                 ></b-icon></b-button></div>
-          <b-switch style="margin-top:1em;vertical-align:middle" v-model="predict" v-if="showPredict" @input="togglePredict()">顯示預測</b-switch><br>
           <b-switch style="margin-top:1em;vertical-align:middle" v-model="meme" v-show="!mobile" @input="toggleMeme()">迷因模式</b-switch>
         <div id='bottom'>
            <a href="https://tonyyu.taipei" style="color: rgb(200,200,200)">2022 Tony Yu </a>
@@ -42,7 +41,7 @@
         <!--  <div id='resource' v-show="showResource">
             <a href="http://www.sporetrofit.com">智聯運動科技</a><br><a href="https://tycsc.cyc.org.tw">桃園國民運動中心</a><br><a href="https://lkcsc.cyc.org.tw">林口國民運動中心</a>
           </div>-->
-         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">Ver. 2022-02-06</a>
+         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">Ver. 2022-02-17</a>
     </div>
     </div>
 
@@ -80,7 +79,6 @@ import Buefy from "buefy";
 import axios from "axios";
 import LineChart from "./components/LineChart";
 import "buefy/dist/buefy.css";
-import subDays from 'date-fns/subDays';
 const apiUrl = "https://tonyyu.taipei:1337"
 Vue.use(Buefy,{
     defaultIconComponent: 'vue-fontawesome',
@@ -96,7 +94,6 @@ export default {
       showResource:false,
       bannedDays:["2022/1/31","2022/2/1","2022/2/2","2022/2/3","2022/2/4","2022/2/5"],
       showPredict:false,
-      predict:false,
       refresh:false,
       dateChoose:true,
       reselectOK:false,
@@ -288,13 +285,8 @@ export default {
           this.menuOptions = "☰";
           let index = this.selectedLoc.indexOf(name);
         this.colorTemplate[index] = `rgb(${randomNum()},${randomNum()},${randomNum()})`//換顏色，同時原陣列也更改
-        if(this.predict&&this.showPredict){
-        let predictColorIndex = this.selectedLoc.indexOf(name)*2;
-        this.chartData.datasets[predictColorIndex].borderColor = this.colorTemplate[index]
-        this.chartData.datasets[predictColorIndex+1].borderColor = this.colorTemplate[index]
-        }else{
+       
           this.chartData.datasets[index].borderColor = this.colorTemplate[index]
-        }
         /*this.$buefy.notification.open({
           type: 'is-warning',
           position:'is-bottom-right',
@@ -355,13 +347,8 @@ export default {
                 let indexOfShort = this.locations.indexOf(name)
                 this.chartData.datasets[this.chartID].backgroundColor = "rgba(255,255,255,0.1)";
                 this.chartData.datasets[this.chartID].label = name
-                if(this.predict&&this.showPredict){
-                  this.chartData.datasets[this.chartID].borderColor = this.colorTemplate[this.chartID/2];
 
-                }
-                else{
-                  this.chartData.datasets[this.chartID].borderColor = this.colorTemplate[this.chartID];
-                }
+                this.chartData.datasets[this.chartID].borderColor = this.colorTemplate[this.chartID];
                 let addedIn = false;
                 let shortIndex = 0;
                 input.locationPeople.forEach((secInput) => {
@@ -377,153 +364,8 @@ export default {
                     this.chartData.datasets[this.chartID].data.push(undefined)
                   }
               })
-              let predictFun = async()=>{
-
-                //下面得出最後兩筆資料的時間差
-                let selectedFullDate = this.selectedDate.getFullYear()+"/"+(this.selectedDate.getMonth()+1)+"/"+this.selectedDate.getDate();
-
-                let date1 = new Date(selectedFullDate+" "+this.chartData.labels[this.chartData.labels.length-1])
-                let date2 = new Date(selectedFullDate+" "+this.chartData.labels[this.chartData.labels.length-2])
-                let minDiff = new Date(date1-date2).getMinutes();
-                let lastTime = this.chartData.labels[this.chartData.labels.length-1];
-                let lastHour = lastTime.split(":")[0];
-                let lastMin = lastTime.split(":")[1];
-                let predictDateVal = [];
-                predictDateVal.push(new Date(`${selectedFullDate} ${lastHour}:${lastMin}`)) //0128
-                while(this.chartData.labels[this.chartData.labels.length-1].split(":")[0] < 22 && this.chartData.labels[this.chartData.labels.length-1].split(":")[0] > 5){
-
-                    lastHour = parseInt(lastHour)
-                    lastMin = parseInt(lastMin)
-
-                    lastMin+=minDiff
-                    if(lastMin >= 60){
-                      lastHour++;
-                    lastMin = lastMin - 60;
-                    }
-                    if(lastHour < 10){
-                      lastHour = '0'+lastHour;
-                    }
-                    if(lastMin < 10){
-                      lastMin = '0'+lastMin
-                    }
-                    if(lastHour != 22 ){
-                  this.chartData.labels.push(`${lastHour}:${lastMin}`)
-                  predictDateVal.push(new Date(`${selectedFullDate} ${lastHour}:${lastMin}`))
-                    }else{
-                      break;
-                    }
-                  }
-              if(this.predict && this.showPredict && (new Date(this.selectedDate).getDate() == new Date().getDate())&&(new Date().getHours()<=21 )){
-                 let setPredictDays = [];
-                this.allDate.forEach(data=>{
-        
-                  for(let i = 1 ; i<=3;i++){
-                    for(let ban of this.bannedDays){
-                    if(`${new Date(ban).getMonth()+1}/${new Date(ban).getDate()}`==`${subDays(this.selectedDate,i*7).getMonth()+1}}/${subDays(this.selectedDate,i*7).getDate()}`){
-                      this.showPredict = false;
-                      this.predict = false;
-                    break;
-                    }
-                    if(new Date(data).getDate() == subDays(this.selectedDate,7*i).getDate()&&(new Date(setPredictDays[i-1]).getDate() != new Date(data).getDate())){
-                    setPredictDays[i-1] = data;
-                    }
-                  }
-                  }
-                })
-                if(setPredictDays.length == 0){
-                  this.update(reselect)
-                  resolve();
-                }
-                let predictMainData = [];
-                let getSecDate = async(days)=>{
-                      return await axios.get(`${apiUrl}/data/date`, {
-                      params: { date: days },
-                      }) //這裏存粹就是弄一個方法在這裡，後續不會調用此方法
-                }
-                await new Promise(resolve=>{
-                  for(let days of setPredictDays){ 
-                   getSecDate(days).then(res2 =>{
-                         predictMainData.push(res2.data); //在這裡將欲預測資料push進predictMainData中，0第一週 1第二週 2第三週
-                         if(predictMainData.length == setPredictDays.length){
-                            resolve();
-                            
-                         }
-                      })
-                    }
-                })
-
-                let date = new Date();
-                let dateOffset = 0;
-                let processData = predictMainData[0]
-                let processedData = [];
-                for(let i = 1; i <= setPredictDays.length ; i++){
-                let tempData = [];
-                predictDateVal.forEach((dateVal)=>{
-                  
-                   date = new Date(dateVal)
-                   dateOffset = (24*60*60*1000)*(7*i);
-                   date.setTime(date - dateOffset)
-                let ans = processData.reduce((prev,curr)=>{
-                            return Math.abs( new Date(date)-new Date(prev.time)) < Math.abs(new Date(date)-new Date(curr.time)) ? prev: curr;
-                          });
-                tempData.push(ans);
-                  
-                })  
-                processedData[i-1] = tempData
-                
-                }
-                this.chartID++;
-                this.chartData.datasets.push({});
-                this.chartData.datasets[this.chartID].data = [];
-                this.chartData.datasets[this.chartID].backgroundColor = "rgba(255,255,255,0.1)";
-                this.chartData.datasets[this.chartID].label = name+"(預測)"
-                this.chartData.datasets[this.chartID].borderColor = this.colorTemplate[(this.chartID-1)/2];
-                for(let i = 1; i< this.chartData.datasets[this.chartID-1].data.length;i++){
-                        this.chartData.datasets[this.chartID].data.push(undefined);
-                }
-                        this.chartData.datasets[this.chartID].data.push(this.chartData.datasets[this.chartID-1].data[this.chartData.datasets[this.chartID-1].data.length-1]);
-
-                await new Promise(resolve=>{
-                  var baselineEst = 0;
-                  var baseline = 0;
-                  var baseDiff = 0;
-                  var maxPeo =processedData[0][0].locationPeople[this.selShortID].maxPeo;
-                    for(let a = 0;a<processedData[0].length;a++){
-                        var estPeo = 0;
-                        for(let i = 0;i < processedData.length;i++){
-                          estPeo += parseInt(processedData[i][a].locationPeople[this.selShortID].peoNum);
-                        }
-                        console.log("Array Counts:"+processedData.length)
-                        console.log("Est. Poeple:"+estPeo)
-                        estPeo = estPeo / processedData.length;
-                        this.chartData.datasets[this.chartID].borderDash = [8,5] //點狀圖
-                        if(a != 0){
-                          let sendData = Math.round(estPeo-baseDiff);
-                          if(sendData > maxPeo){
-                            sendData = maxPeo;
-                          }else if(sendData <=0){
-                            sendData = 0;
-                          }
-                          this.chartData.datasets[this.chartID].data.push(sendData);
-                        }else{
-                          baselineEst = estPeo;
-                          baseline = this.chartData.datasets[this.chartID-1].data[this.chartData.datasets[this.chartID-1].data.length-1];
-                          baseDiff = baselineEst - baseline
-                        }
-                        if(a == processedData[0].length-1)
-                        resolve();
-                    }
-
-                })
-
-              }
-            }
-              predictFun().then(()=>{
                 this.update(reselect)
                 resolve();
-
-            })
-
 
               },750);
           })   
@@ -569,10 +411,7 @@ export default {
         }
       }
       if(type=='date' && (new Date(this.selectedDate).getTime() >= new Date(this.minDate).getTime()) && new Date(this.selectedDate).getTime()<= new Date(this.maxDate).getTime()){
-        if(new Date().getDate()!=new Date(this.selectedDate).getDate()){
-            this.showPredict = false
-            this.predict = false
-          }else if(new Date().getHours()< 21){
+        if(new Date().getHours()< 21){
               for(let ban of this.bannedDays){
                     if(`${new Date(ban).getMonth()}/${new Date(ban).getDate()}`==`${new Date(new Date(this.selectedDate).getDate())}/${new Date(this.selectedDate).getDate()}`){
                       this.showPredict = false;
