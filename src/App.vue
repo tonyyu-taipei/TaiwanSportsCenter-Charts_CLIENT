@@ -42,7 +42,7 @@
         <!--  <div id='resource' v-show="showResource">
             <a href="http://www.sporetrofit.com">智聯運動科技</a><br><a href="https://tycsc.cyc.org.tw">桃園國民運動中心</a><br><a href="https://lkcsc.cyc.org.tw">林口國民運動中心</a>
           </div>-->
-         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">Ver. 2022-03-01</a>
+         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">Ver. 2022-03-01.2</a>
     </div>
     </div>
 
@@ -460,25 +460,22 @@ export default {
                 })
 
                 let date = new Date();
-                let dateOffset = 0;
                 let processData = predictMainData[0]
                 let processedData = [];
-                for(let i = 1; i <= setPredictDays.length ; i++){
                 let tempData = [];
                 predictDateVal.forEach((dateVal)=>{
+                  date = subDays(new Date(dateVal),7)
                   
-                   date = new Date(dateVal)
-                   dateOffset = (24*60*60*1000)*(7*i);
-                   date.setTime(date - dateOffset)
-                let ans = processData.reduce((prev,curr)=>{
-                            return Math.abs( new Date(date)-new Date(prev.time)) < Math.abs(new Date(date)-new Date(curr.time)) ? prev: curr;
-                          });
-                tempData.push(ans);
+
+                  let ans = processData.reduce((prev,curr)=>{
+                              return Math.abs( new Date(date)-new Date(prev.time)) < Math.abs(new Date(date)-new Date(curr.time)) ? prev: curr;
+                            });
+                  tempData.push(ans);
                   
                 })  
-                processedData[i-1] = tempData
+                processedData[0] = tempData
                 
-                }
+            
                 this.chartID++;
                 this.chartData.datasets.push({});
                 this.chartData.datasets[this.chartID].data = [];
@@ -500,8 +497,6 @@ export default {
                         for(let i = 0;i < processedData.length;i++){
                           estPeo += parseInt(processedData[i][a].locationPeople[this.selShortID].peoNum);
                         }
-                        console.log("Array Counts:"+processedData.length)
-                        console.log("Est. Poeple:"+estPeo)
                         estPeo = estPeo / processedData.length;
                         this.chartData.datasets[this.chartID].borderDash = [8,5] //點狀圖
                         if(a != 0){
@@ -548,17 +543,18 @@ export default {
                  }else{
                     this.alertUndefined = 0;
                  }
-                 if(this.alertUndefined != 0 && alreadyShown == false){
-                    this.$buefy.notification.open({
-                              type: 'is-warning',
-                              position:'is-top',
-                              pauseOnHover:true,
-                              message:`${data.label}在此日期無資料`,
-                              hasIcon: true
-                            })
-                     alreadyShown = true;
-                 }
+
                })
+                if(this.alertUndefined != 0 && alreadyShown == false){
+                  this.$buefy.notification.open({
+                            type: 'is-warning',
+                            position:'is-top',
+                            pauseOnHover:true,
+                            message:`${data.label}在此日期無資料`,
+                            hasIcon: true
+                          })
+                    alreadyShown = true;
+                 }
               })
               this.chartData ={
                 ... this.chartData
