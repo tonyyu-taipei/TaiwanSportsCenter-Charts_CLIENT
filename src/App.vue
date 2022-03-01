@@ -9,7 +9,7 @@
     </div>
     <div id="left" v-if=showSel>
       
-      <h1>健身房の圖表</h1>
+      <h1>明天健！</h1>
       <b-field label="選擇日期">
         <b-datepicker
           placeholder="Click to select..."
@@ -33,7 +33,7 @@
           <b-button type="is-danger" style="" v-if="clearToggle" @click="clearChart('all')"><b-icon
                 icon="trash-alt"
                 ></b-icon></b-button></div>
-          <b-switch style="margin-top:1em;vertical-align:middle" v-model="predict" v-if="showPredict" @input="togglePredict()">顯示預測</b-switch><br>
+          <b-switch style="margin-top:1em;vertical-align:middle" v-model="predict" v-if="showPredict" @input="togglePredict()">顯示上週</b-switch><br>
           <b-switch style="margin-top:1em;vertical-align:middle" v-model="meme" v-show="!mobile" @input="toggleMeme()">迷因模式</b-switch>
         <div id='bottom'>
            <a href="https://tonyyu.taipei" style="color: rgb(200,200,200)">2022 Tony Yu </a>
@@ -42,7 +42,7 @@
         <!--  <div id='resource' v-show="showResource">
             <a href="http://www.sporetrofit.com">智聯運動科技</a><br><a href="https://tycsc.cyc.org.tw">桃園國民運動中心</a><br><a href="https://lkcsc.cyc.org.tw">林口國民運動中心</a>
           </div>-->
-         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">Ver. 2022-02-06</a>
+         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">Ver. 2022-03-01</a>
     </div>
     </div>
 
@@ -81,6 +81,7 @@ import axios from "axios";
 import LineChart from "./components/LineChart";
 import "buefy/dist/buefy.css";
 import subDays from 'date-fns/subDays';
+import isSameDay from 'date-fns/isSameDay';
 const apiUrl = "https://tonyyu.taipei:1337"
 Vue.use(Buefy,{
     defaultIconComponent: 'vue-fontawesome',
@@ -93,6 +94,7 @@ export default {
   },
   data() {
     return {
+      alertUndefined: 0,
       showResource:false,
       bannedDays:["2022/1/31","2022/2/1","2022/2/2","2022/2/3","2022/2/4","2022/2/5"],
       showPredict:false,
@@ -156,7 +158,9 @@ export default {
           yAxes: [{
             ticks: {
                 fontColor: 'white',
-                fontSize:18
+                fontSize:18,
+                max:60,
+                min:0
             },
             gridLines:{
               display:true,
@@ -367,6 +371,9 @@ export default {
                 input.locationPeople.forEach((secInput) => {
                   if (secInput.short == this.locationsShort[indexOfShort]) {
                     this.chartData.datasets[this.chartID].data.push(parseInt(secInput.peoNum));
+                    if(secInput.peoNum > this.options.scales.yAxes[0].ticks.max){
+                      this.options.scales.yAxes[0].ticks.max = secInput.peoNum;
+                    }
                     addedIn = true;
                   }
                   if(!addedIn)
@@ -417,18 +424,18 @@ export default {
                  let setPredictDays = [];
                 this.allDate.forEach(data=>{
         
-                  for(let i = 1 ; i<=3;i++){
                     for(let ban of this.bannedDays){
-                    if(`${new Date(ban).getMonth()+1}/${new Date(ban).getDate()}`==`${subDays(this.selectedDate,i*7).getMonth()+1}}/${subDays(this.selectedDate,i*7).getDate()}`){
+                    if(`${new Date(ban).getMonth()+1}/${new Date(ban).getDate()}`==`${subDays(this.selectedDate,7).getMonth()+1}}/${subDays(this.selectedDate,7).getDate()}`){
                       this.showPredict = false;
                       this.predict = false;
                     break;
                     }
-                    if(new Date(data).getDate() == subDays(this.selectedDate,7*i).getDate()&&(new Date(setPredictDays[i-1]).getDate() != new Date(data).getDate())){
-                    setPredictDays[i-1] = data;
+                    if(new Date(data).getDate() == subDays(this.selectedDate,7).getDate()&&!isSameDay(new Date(setPredictDays[0]),new Date(data))){
+                    // if(new Date(data).getDate() == subDays(this.selectedDate,7).getDate()&&(new Date(setPredictDays[0]).getDate() != new Date(data).getDate())){
+                    setPredictDays[0] = data;
                     }
                   }
-                  }
+                  
                 })
                 if(setPredictDays.length == 0){
                   this.update(reselect)
@@ -531,6 +538,28 @@ export default {
 
     },
    async update(reselect){
+              this.chartData.datasets.forEach(data=>{
+                let alreadyShown = false;
+               data.data.forEach(num=>{
+                 if(num == undefined){
+                   this.alertUndefined++;
+                   //use buefy alert
+
+                 }else{
+                    this.alertUndefined = 0;
+                 }
+                 if(this.alertUndefined != 0 && alreadyShown == false){
+                    this.$buefy.notification.open({
+                              type: 'is-warning',
+                              position:'is-top',
+                              pauseOnHover:true,
+                              message:`${data.label}在此日期無資料`,
+                              hasIcon: true
+                            })
+                     alreadyShown = true;
+                 }
+               })
+              })
               this.chartData ={
                 ... this.chartData
               }
@@ -581,7 +610,7 @@ export default {
                     break;
                     }else{
                       this.showPredict = true;
-                      this.predict = true;
+                      // this.predict = true;
                     }
               }
           }else if(new Date().getHours()==21 && new Date().getMinutes() < 45){
