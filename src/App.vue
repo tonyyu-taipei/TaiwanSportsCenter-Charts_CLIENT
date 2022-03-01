@@ -34,7 +34,6 @@
                 icon="trash-alt"
                 ></b-icon></b-button></div>
           <b-switch style="margin-top:1em;vertical-align:middle" v-model="predict" v-if="showPredict" @input="togglePredict()">顯示上週</b-switch><br>
-
           <b-switch style="margin-top:1em;vertical-align:middle" v-model="meme" v-show="!mobile" @input="toggleMeme()">迷因模式</b-switch>
         <div id='bottom'>
            <a href="https://tonyyu.taipei" style="color: rgb(200,200,200)">2022 Tony Yu </a>
@@ -44,7 +43,6 @@
             <a href="http://www.sporetrofit.com">智聯運動科技</a><br><a href="https://tycsc.cyc.org.tw">桃園國民運動中心</a><br><a href="https://lkcsc.cyc.org.tw">林口國民運動中心</a>
           </div>-->
          <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">Ver. 2022-03-01</a>
-
     </div>
     </div>
 
@@ -84,7 +82,6 @@ import LineChart from "./components/LineChart";
 import "buefy/dist/buefy.css";
 import subDays from 'date-fns/subDays';
 import isSameDay from 'date-fns/isSameDay';
-
 const apiUrl = "https://tonyyu.taipei:1337"
 Vue.use(Buefy,{
     defaultIconComponent: 'vue-fontawesome',
@@ -101,6 +98,7 @@ export default {
       showResource:false,
       bannedDays:["2022/1/31","2022/2/1","2022/2/2","2022/2/3","2022/2/4","2022/2/5"],
       showPredict:false,
+      predict:false,
       refresh:false,
       dateChoose:true,
       reselectOK:false,
@@ -294,8 +292,13 @@ export default {
           this.menuOptions = "☰";
           let index = this.selectedLoc.indexOf(name);
         this.colorTemplate[index] = `rgb(${randomNum()},${randomNum()},${randomNum()})`//換顏色，同時原陣列也更改
-       
+        if(this.predict&&this.showPredict){
+        let predictColorIndex = this.selectedLoc.indexOf(name)*2;
+        this.chartData.datasets[predictColorIndex].borderColor = this.colorTemplate[index]
+        this.chartData.datasets[predictColorIndex+1].borderColor = this.colorTemplate[index]
+        }else{
           this.chartData.datasets[index].borderColor = this.colorTemplate[index]
+        }
         /*this.$buefy.notification.open({
           type: 'is-warning',
           position:'is-bottom-right',
@@ -356,8 +359,13 @@ export default {
                 let indexOfShort = this.locations.indexOf(name)
                 this.chartData.datasets[this.chartID].backgroundColor = "rgba(255,255,255,0.1)";
                 this.chartData.datasets[this.chartID].label = name
+                if(this.predict&&this.showPredict){
+                  this.chartData.datasets[this.chartID].borderColor = this.colorTemplate[this.chartID/2];
 
-                this.chartData.datasets[this.chartID].borderColor = this.colorTemplate[this.chartID];
+                }
+                else{
+                  this.chartData.datasets[this.chartID].borderColor = this.colorTemplate[this.chartID];
+                }
                 let addedIn = false;
                 let shortIndex = 0;
                 input.locationPeople.forEach((secInput) => {
@@ -521,6 +529,9 @@ export default {
                 this.update(reselect)
                 resolve();
 
+            })
+
+
               },750);
           })   
       
@@ -587,7 +598,10 @@ export default {
         }
       }
       if(type=='date' && (new Date(this.selectedDate).getTime() >= new Date(this.minDate).getTime()) && new Date(this.selectedDate).getTime()<= new Date(this.maxDate).getTime()){
-        if(new Date().getHours()< 21){
+        if(new Date().getDate()!=new Date(this.selectedDate).getDate()){
+            this.showPredict = false
+            this.predict = false
+          }else if(new Date().getHours()< 21){
               for(let ban of this.bannedDays){
                     if(`${new Date(ban).getMonth()}/${new Date(ban).getDate()}`==`${new Date(new Date(this.selectedDate).getDate())}/${new Date(this.selectedDate).getDate()}`){
                       this.showPredict = false;
