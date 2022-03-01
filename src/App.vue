@@ -33,8 +33,10 @@
           <b-button type="is-danger" style="" v-if="clearToggle" @click="clearChart('all')"><b-icon
                 icon="trash-alt"
                 ></b-icon></b-button></div>
-          <b-switch style="margin-top:1em;vertical-align:middle" v-model="predict" v-if="showPredict" @input="togglePredict()">顯示上週</b-switch><br>
-          <b-switch style="margin-top:1em;vertical-align:middle" v-model="meme" v-show="!mobile" @input="toggleMeme()">迷因模式</b-switch>
+          <b-tooltip label="藉前週與現在資料差預測未來人數趨勢">
+          <b-switch style="margin-top:1em;vertical-align:middle" v-model="predict" v-if="showPredict" @input="togglePredict()">前週資訊</b-switch>
+          </b-tooltip><br>
+          <b-switch style="margin-top:1em;vertical-align:middle" v-model="meme" v-show="!mobile" @input="toggleMeme()">迷因先生</b-switch>
         <div id='bottom'>
            <a href="https://tonyyu.taipei" style="color: rgb(200,200,200)">2022 Tony Yu </a>
           <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">| 來源 </a>
@@ -42,7 +44,7 @@
         <!--  <div id='resource' v-show="showResource">
             <a href="http://www.sporetrofit.com">智聯運動科技</a><br><a href="https://tycsc.cyc.org.tw">桃園國民運動中心</a><br><a href="https://lkcsc.cyc.org.tw">林口國民運動中心</a>
           </div>-->
-         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">Ver. 2022-03-01.2</a>
+         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">Ver. 2022-03-01.3</a>
     </div>
     </div>
 
@@ -372,7 +374,7 @@ export default {
                   if (secInput.short == this.locationsShort[indexOfShort]) {
                     this.chartData.datasets[this.chartID].data.push(parseInt(secInput.peoNum));
                     if(secInput.peoNum > this.options.scales.yAxes[0].ticks.max){
-                      this.options.scales.yAxes[0].ticks.max = secInput.peoNum;
+                      this.options.scales.yAxes[0].ticks.max = secInput.peoNum%10==0?secInput.peoNum:Math.ceil(secInput.peoNum/10)*10;
                     }
                     addedIn = true;
                   }
@@ -497,7 +499,7 @@ export default {
                         for(let i = 0;i < processedData.length;i++){
                           estPeo += parseInt(processedData[i][a].locationPeople[this.selShortID].peoNum);
                         }
-                        estPeo = estPeo / processedData.length;
+                        // estPeo = estPeo / processedData.length;
                         this.chartData.datasets[this.chartID].borderDash = [8,5] //點狀圖
                         if(a != 0){
                           let sendData = Math.round(estPeo-baseDiff);
@@ -506,6 +508,9 @@ export default {
                           }else if(sendData <=0){
                             sendData = 0;
                           }
+                        if(sendData > this.options.scales.yAxes[0].ticks.max){
+                          this.options.scales.yAxes[0].ticks.max = sendData%10==0?sendData:Math.ceil(sendData/10)*10;
+                    }
                           this.chartData.datasets[this.chartID].data.push(sendData);
                         }else{
                           baselineEst = estPeo;
@@ -606,7 +611,6 @@ export default {
                     break;
                     }else{
                       this.showPredict = true;
-                      // this.predict = true;
                     }
               }
           }else if(new Date().getHours()==21 && new Date().getMinutes() < 45){
@@ -617,7 +621,6 @@ export default {
                     break;
                     }else{
                       this.showPredict = true;
-                      this.predict = true;
                     }
               }
           //this.showPredict = true;
@@ -725,6 +728,7 @@ background: linear-gradient(90deg, rgba(170,102,232,1) 0%, rgba(0,61,124,1) 100%
     padding-right:4%;
     padding-top:3em;
     display: inline-block;
+    min-height:750px;
     height:100vh;
     background-color:rgba(0,0,0,0.5);
 
