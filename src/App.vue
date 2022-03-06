@@ -44,7 +44,7 @@
         <!--  <div id='resource' v-show="showResource">
             <a href="http://www.sporetrofit.com">智聯運動科技</a><br><a href="https://tycsc.cyc.org.tw">桃園國民運動中心</a><br><a href="https://lkcsc.cyc.org.tw">林口國民運動中心</a>
           </div>-->
-         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">Ver. 2022-03-01.3</a>
+         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">Ver. 2022-03-06</a>
     </div>
     </div>
 
@@ -773,6 +773,7 @@ background: linear-gradient(90deg, rgba(170,102,232,1) 0%, rgba(0,61,124,1) 100%
     -moz-animation: slideIn .5s forwards;
     animation: slideIn .5s forwards;
     backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     overflow:auto
 
   }
