@@ -1,5 +1,6 @@
 # 運動中心健身房圖表查詢系統（用戶端）
 
+<img src="https://github.com/tonyyu-taipei/TaiwanSportsCenter-Charts_CLIENT/raw/master/pwa-192x192.png" />
 [系統網址](https://tonyyu.taipei/gym-stats)
 [Changelog與Known Bugs](https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F)
 
