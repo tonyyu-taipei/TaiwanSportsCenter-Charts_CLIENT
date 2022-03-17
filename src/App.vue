@@ -11,6 +11,7 @@
       
       <h1>明天健！</h1>
       <b-field label="選擇日期">
+        <span @click="getAllDate()">
         <b-datepicker
           placeholder="Click to select..."
           :min-date="minDate"
@@ -19,9 +20,11 @@
           v-model="selectedDate"
           :unselectable-dates="checkBanned"
           @input="clearChart('date')"
+          
           :disable="dateChoose"
         >
         </b-datepicker>
+        </span>
       </b-field>
       
 
@@ -44,7 +47,7 @@
         <!--  <div id='resource' v-show="showResource">
             <a href="http://www.sporetrofit.com">智聯運動科技</a><br><a href="https://tycsc.cyc.org.tw">桃園國民運動中心</a><br><a href="https://lkcsc.cyc.org.tw">林口國民運動中心</a>
           </div>-->
-         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">Ver. 2022-03-06</a>
+         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">Ver. 2022-03-17</a>
     </div>
     </div>
 
