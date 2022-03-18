@@ -52,7 +52,7 @@
         <!--  <div id='resource' v-show="showResource">
             <a href="http://www.sporetrofit.com">智聯運動科技</a><br><a href="https://tycsc.cyc.org.tw">桃園國民運動中心</a><br><a href="https://lkcsc.cyc.org.tw">林口國民運動中心</a>
           </div>-->
-         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">2022-03-18v2</a>
+         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">2022-03-18v3</a>
     </div>
     </div>
 
@@ -64,9 +64,16 @@
      </div>
      
       <LineChart :chartData="chartData" :options="options" v-if="showChart" :key="ckey" style="width:97%;height:100%"/>
-      <div id="rightload" v-else>
-        <p v-text="loadingEl" style="color:white"></p>
-      <b-progress></b-progress></div> <!--若需要實時進度表，可加:value="progress" -->
+      <div v-else>
+    <b-loading v-model="alwaysTrue" :is-full-page="isFullPage" :can-cancel="false">
+      <loading-content>
+        <img src="../GymHead.svg" id="svgComponent"/>
+        <!-- <p v-text="loadingEl"></p>如需資料載入中文字，可將此註解解除 -->
+              <b-progress type="is-info" :value="progress" size="is-small"></b-progress> <!--若需要實時進度表，可加:value="progress" -->
+
+      </loading-content>
+    </b-loading>
+      </div>
     </div>
   </div>
 </template>
@@ -106,6 +113,7 @@ export default {
   },
   data() {
     return {
+      alwaysTrue:true,
       alertUndefined: 0,
       showResource:false,
       bannedDays:["2022/1/31","2022/2/1","2022/2/2","2022/2/3","2022/2/4","2022/2/5"],
@@ -678,7 +686,7 @@ export default {
         //const timer = ms => new Promise(res => setTimeout(res, ms))
           for (let button of origIDArr){
             this.progress+=random(0,5)
-            this.loadingEl = `正在載入${origSelLocArr[index]}...（${index+1}/${origIDArr.length}）`
+            this.loadingEl = `${origSelLocArr[index]}...（${index+1}/${origIDArr.length}）`
            await this.selectLocation(origSelLocArr[index],button,true)
             //await timer(100)
             
@@ -910,7 +918,7 @@ canvas{
   }
 loading-content{
   height: 105px;
-  width:105px;
+  width:100px;
   position: absolute;
 }
 
