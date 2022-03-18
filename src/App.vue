@@ -3,7 +3,11 @@
 
     <div id="fixedLogo">
     <img src="https://tonyyu.taipei/ico/logo@100.png" onclick="window.location.href ='../index.html'" id=logo style="cursor:pointer;"></div>
-    <b-loading :is-full-page="isFullPage" v-model="isLoading" :can-cancel="false"></b-loading>
+    <b-loading :is-full-page="isFullPage" v-model="isLoading" :can-cancel="false">
+      <loading-content>
+        <img src="../GymHead.svg" id="svgComponent"/>
+      </loading-content>
+    </b-loading>
     <div id="menu">
   <b-button pill   @click="toggleMenu()" v-if="mobile" type="is-primary is-light">{{menuOptions}}</b-button>
     </div>
@@ -48,13 +52,13 @@
         <!--  <div id='resource' v-show="showResource">
             <a href="http://www.sporetrofit.com">智聯運動科技</a><br><a href="https://tycsc.cyc.org.tw">桃園國民運動中心</a><br><a href="https://lkcsc.cyc.org.tw">林口國民運動中心</a>
           </div>-->
-         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">Ver. 2022-03-18</a>
+         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">2022-03-18v2</a>
     </div>
     </div>
 
 
     <div id="right" >
-        <div id=meme v-if=meme>
+        <div id=meme v-if="meme">
         <img src="https://tonyyu.taipei/img/meme.3e0d41da.png" rel="preload">
         <h1>{{memeTxt[memeID]}}</h1>
      </div>
@@ -89,6 +93,7 @@ import "buefy/dist/buefy.css";
 import subDays from 'date-fns/subDays';
 import isSameDay from 'date-fns/isSameDay';
 import isWithinInterval from 'date-fns/isWithinInterval';
+import setHours from 'date-fns/setHours'
 const apiUrl = "https://tonyyu.taipei:1337"
 Vue.use(Buefy,{
     defaultIconComponent: 'vue-fontawesome',
@@ -894,4 +899,28 @@ canvas{
   
   
 }
+
+/* loading Screen Animation */
+
+  #svgComponent{
+    height:100px;
+    transform-origin: 50% 100%;
+      animation: bounce .9s ease-in-out infinite ;
+
+  }
+loading-content{
+  height: 105px;
+  width:105px;
+  position: absolute;
+}
+
+    @keyframes bounce {
+      
+        0%   { transform: scale(1,1)    translateY(0); }
+        10%  { transform: scale(1.5,.7) translateY(0); }
+        30%  { transform: scale(.8,1.2) translateY(-30px); }
+        50%  { transform: scale(1,1)    translateY(0); }
+        70% { transform: scale(1.1,.9) translateY(0px); }
+        100% { transform: scale(1,1)    translateY(0); }
+    }
 </style>
