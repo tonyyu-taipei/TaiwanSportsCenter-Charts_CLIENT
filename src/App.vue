@@ -24,7 +24,6 @@
           v-model="selectedDate"
           :unselectable-dates="checkBanned"
           @input="clearChart('date')"
-          :disabled="showBtn"
           
           :disable="dateChoose"
         >
@@ -52,7 +51,7 @@
         <!--  <div id='resource' v-show="showResource">
             <a href="http://www.sporetrofit.com">智聯運動科技</a><br><a href="https://tycsc.cyc.org.tw">桃園國民運動中心</a><br><a href="https://lkcsc.cyc.org.tw">林口國民運動中心</a>
           </div>-->
-         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">2022-03-18v3</a>
+         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">2022-03-18v4</a>
     </div>
     </div>
 

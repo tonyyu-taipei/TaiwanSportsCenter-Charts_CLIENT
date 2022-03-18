@@ -1,6 +1,6 @@
 {
   "name": "sportscenter-gymchart",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "private": true,
   "scripts": {
     "serve-webpack": "vue-cli-service serve",
