@@ -42,6 +42,8 @@ export default defineConfig({
         short_name: "明天健！",
         description: "利用圖表提供運動中心的人流資訊",
         theme_color: "rgb(0,61,124)",
+        start_url:"/gym-stats",
+        scope:"/gym-stats",
         icons:[
           {
             src:"pwa-192x192.png",
