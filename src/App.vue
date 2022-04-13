@@ -57,7 +57,7 @@
         </template>
         <div class='panel-block' style="">
           <div class="btn-container">
-            <b-button v-for="(index, id) in locationsOthers" :key="id+locationsTwoWords.length" v-on:click="selectLocation(index,id+locationsTwoWords.length)"  :type="buttonType[id+locationsTwoWords.length]" :disabled="showBtn" class="chart-btn">{{ index }}</b-button>
+            <b-button v-for="(index, id) in locationsOthers" :key="id+locationsTwoWords.length" v-on:click="selectLocation(index,id+locationsTwoWords.length)"  :type="buttonType[id+locationsTwoWords.length]" :disabled="showBtn" class="chart-btn" style="float:left">{{ index }}</b-button>
           </div>
         </div>
 
@@ -77,7 +77,7 @@
            <a href="https://tonyyu.taipei" style="color: rgb(200,200,200)">2022 Tony Yu </a>
           <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">| 來源 </a>
           <br>
-         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">2022-04-13v2</a>
+         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">2022-04-13v3</a>
     </div>
     </div>
 
@@ -761,7 +761,10 @@ export default {
 </script>
 
 <style>
-
+body{
+  overflow: hidden;
+  height: 100vh
+}
 #app h1{
   color:rgb(240,240,240)
 }
@@ -816,6 +819,7 @@ background: linear-gradient(90deg, rgba(170,102,232,1) 0%, rgba(0,61,124,1) 100%
     min-height:750px;
     height:100vh;
     background-color:rgba(0,0,0,0.5);
+    overflow:auto;
 
 
     margin-bottom: 0px;
