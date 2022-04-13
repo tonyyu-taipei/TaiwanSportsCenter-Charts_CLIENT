@@ -30,9 +30,38 @@
         </b-datepicker>
         </span>
       </b-field>
-      
+      <b-collapse class='panel' v-model="openC1" >
+        <template #trigger>
+                <div
+                    class="panel-heading"
+                    role="button"
+                     @click="collapse(1)">
+                    <strong>運動中心</strong>
+                </div>
+        </template>
+        <div class='panel-block' >
+          <div class="btn-container">
+             <b-button v-for="(index, id) in locationsTwoWords" :key="id" v-on:click="selectLocation(index,id)"  :type="buttonType[id]" :disabled="showBtn" class="chart-btn">{{ index }}</b-button>
+          </div>
+        </div>
 
-          <b-button v-for="(index, id) in locations" :key="id" v-on:click="selectLocation(index,id)"  :type="buttonType[id]" :disabled="showBtn" >{{ index }}</b-button>
+      </b-collapse>
+      <b-collapse class='panel' v-model="openC2" >
+        <template #trigger>
+                <div
+                    class="panel-heading"
+                    role="button"
+                   @click="collapse(2)">
+                    <strong>其他場館</strong>
+                </div>
+        </template>
+        <div class='panel-block' style="">
+          <div class="btn-container">
+            <b-button v-for="(index, id) in locationsOthers" :key="id" v-on:click="selectLocation(index,id)"  :type="buttonType[id]" :disabled="showBtn" class="chart-btn">{{ index }}</b-button>
+          </div>
+        </div>
+
+      </b-collapse>
     <div id="options">
           <b-button type="is-success"  v-show="dateChoose&&refresh" @click="clearChart('date')"><b-icon
                 icon="sync"
@@ -48,10 +77,7 @@
            <a href="https://tonyyu.taipei" style="color: rgb(200,200,200)">2022 Tony Yu </a>
           <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">| 來源 </a>
           <br>
-        <!--  <div id='resource' v-show="showResource">
-            <a href="http://www.sporetrofit.com">智聯運動科技</a><br><a href="https://tycsc.cyc.org.tw">桃園國民運動中心</a><br><a href="https://lkcsc.cyc.org.tw">林口國民運動中心</a>
-          </div>-->
-         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">2022-03-18v4</a>
+         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">2022-04-13</a>
     </div>
     </div>
 
@@ -117,6 +143,8 @@ export default {
       showResource:false,
       bannedDays:["2022/1/31","2022/2/1","2022/2/2","2022/2/3","2022/2/4","2022/2/5"],
       showPredict:false,
+      openC1:false,
+      openC2:false,
       predict:false,
       refresh:false,
       dateChoose:true,
@@ -206,6 +234,26 @@ export default {
   computed: {
     console: () => console,
     window: () => window,
+    locationsTwoWords: function(){
+      let res = [];
+     this.locations.forEach(str=>{
+        if (str.length <=2){
+          res.push(str)
+        }
+      })
+      return res;
+    },
+    locationsOthers: function(){
+      let res = [];
+     this.locations.forEach(str=>{
+        if (str.length >2){
+          res.push(str)
+        }
+      })
+      return res;
+    },
+
+
   },
   mounted() {
     window.onresize = () => {
@@ -235,6 +283,13 @@ export default {
 
 },
   methods: {
+    collapse(id){
+      if(id == 1){
+        this.openC2 = false;
+      }else if(id == 2){
+        this.openC1 = false;
+      }
+    },
     checkBanned(days){
       this.bannedDays.forEach(data=>{
         if(`${new Date(data).getMonth()+1}/${new Date(data).getDate()}`==`${new Date(days).getMonth()+1}/${new Date(days).getDate()}`){
@@ -723,6 +778,7 @@ export default {
   z-index: 9;
   top:0;
 }
+
 #logo{
   height:50px;
   margin-top:10px;
@@ -906,7 +962,21 @@ canvas{
   
   
 }
+.panel-heading{
+  border-radius: 0px 0px 0px 0px;
+  font-size:1em;
+  padding:.6em .1em;
+}
+.panel-block:last-child{
+  border-bottom-left-radius: 0px;
+  border-bottom-right-radius: 0px;
+  background-color: rgba(0,0,0,0.3);
+}
+.btn-container{
 
+  max-height:30vh;
+  overflow:auto;
+}
 /* loading Screen Animation */
 
   #svgComponent{
