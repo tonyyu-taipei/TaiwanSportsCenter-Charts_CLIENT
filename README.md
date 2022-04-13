@@ -1,4 +1,4 @@
-# 運動中心健身房圖表查詢系統（用戶端）
+# 健身房圖表查詢系統（用戶端）
 
 <img src="https://github.com/tonyyu-taipei/TaiwanSportsCenter-Charts_CLIENT/blob/master/public/pwa-192x192.png" />
 
@@ -39,7 +39,7 @@ https://tonyyu.taipei:1337
 	},
 ]
 ```
-short為運動中心縮寫、peoNum為當下人數、maxPeo為最多人數
+short為健身房縮寫、peoNum為當下人數、maxPeo為最多人數
 
 2. /data/date：將抓取所有資料之日期與時間（上方time）
 ```json
@@ -50,7 +50,7 @@ short為運動中心縮寫、peoNum為當下人數、maxPeo為最多人數
 
 日期格式需JS new Date()可辨識，將回傳符合該日的資料（如1.）。
 
-4. /locations：將抓取所有運動中心名稱（縮寫與中文名）
+4. /locations：將抓取所有健身房名稱（縮寫與中文名）
 ```json
 [
     {"short":"DASC","name":"大安","id":"61e5499321650236cb94f8e9"},
