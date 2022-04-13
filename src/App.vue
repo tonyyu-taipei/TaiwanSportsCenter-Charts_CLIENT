@@ -30,7 +30,7 @@
         </b-datepicker>
         </span>
       </b-field>
-      <b-collapse class='panel' v-model="openC1" >
+      <b-collapse class='panel' v-model="openC1" style="margin-top:20px">
         <template #trigger>
                 <div
                     class="panel-heading"
@@ -46,7 +46,7 @@
         </div>
 
       </b-collapse>
-      <b-collapse class='panel' v-model="openC2" >
+      <b-collapse class='panel' v-model="openC2" style="margin-top:-20px">
         <template #trigger>
                 <div
                     class="panel-heading"
@@ -77,7 +77,7 @@
            <a href="https://tonyyu.taipei" style="color: rgb(200,200,200)">2022 Tony Yu </a>
           <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">| 來源 </a>
           <br>
-         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">2022-04-13v3</a>
+         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">2022-04-13v4</a>
     </div>
     </div>
 
@@ -140,7 +140,6 @@ export default {
     return {
       alwaysTrue:true,
       alertUndefined: 0,
-      showResource:false,
       bannedDays:["2022/1/31","2022/2/1","2022/2/2","2022/2/3","2022/2/4","2022/2/5"],
       showPredict:false,
       openC1:false,
@@ -297,9 +296,7 @@ export default {
         }
       })
     },
-    toggleResource(){
-      this.showResource = !this.showResource;
-    },
+
     togglePredict(){
       this.clearChart('date')
     },
@@ -761,9 +758,24 @@ export default {
 </script>
 
 <style>
+@supports (-webkit-touch-callout: none) {
+  /* CSS specific to iOS devices */ 
+  body{
+    height:100%
+  }
+}
+@supports not (-webkit-touch-callout: none) {
+  /* CSS specific to non iOS devices */ 
+  body{
+    height:100vh
+  }
+}
 body{
   overflow: hidden;
-  height: 100vh
+}
+.datepicker .dropdown-menu{
+  top:150px;
+  position:fixed;
 }
 #app h1{
   color:rgb(240,240,240)
@@ -940,22 +952,7 @@ canvas{
 
   }
 }
-#resource{
-  float:left;
-  color:white;
-  background-color: rgba(255,255,255,.4);
-  padding: 1em 1em 1em 1em;
-  display:block;
-  width:100%;
-  animation: slideInX .5s
-}
-#resource a:hover{
-  color:slateblue
-}
-#resource a{
-  color:white;
-  cursor: pointer;
-}
+
 #bottom{
   text-align: left;
   margin-top:40%;
