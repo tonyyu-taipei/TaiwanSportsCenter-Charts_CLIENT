@@ -15,7 +15,7 @@ https://tonyyu.taipei:1337
 ```
 可在 /src/App.vue中，修改您的apiURL
 
-後端將在近期內開源上傳GitHub
+
 
 ## 介接方式
 1. /data：抓取所有資料庫內資料，以JSON表示，如： 
