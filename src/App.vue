@@ -63,14 +63,21 @@
 
       </b-collapse>
     <div id="options">
+        <transition name="slide">
           <b-button type="is-success"  v-show="dateChoose&&refresh" @click="clearChart('date')"><b-icon
                 icon="sync"
                 ></b-icon></b-button>
+        </transition>
+        <transition name="slide">
           <b-button type="is-danger" style="" v-if="clearToggle" @click="clearChart('all')"><b-icon
                 icon="trash-alt"
-                ></b-icon></b-button></div>
+                ></b-icon></b-button>
+        </transition>
+                </div>
           <b-tooltip label="藉前週與現在資料差預測未來人數趨勢">
-          <b-switch style="margin-top:1em;vertical-align:middle" v-model="predict" v-if="showPredict" @input="togglePredict()">前週資訊</b-switch>
+            <transition name="slide">
+              <b-switch style="margin-top:1em;vertical-align:middle" v-model="predict" v-if="showPredict" @input="togglePredict()">前週資訊</b-switch>
+            </transition>
           </b-tooltip><br>
           <b-switch style="margin-top:1em;vertical-align:middle" v-model="meme" v-show="!mobile" @input="toggleMeme()">迷因先生</b-switch>
           <transition name="fade">
