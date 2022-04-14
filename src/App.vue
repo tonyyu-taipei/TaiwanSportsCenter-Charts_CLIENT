@@ -30,7 +30,7 @@
         </b-datepicker>
         </span>
       </b-field>
-      <b-collapse class='panel' v-model="openC1" style="margin-top:20px">
+      <b-collapse class='panel' v-model="openC1" style="margin-top:20px" animation="slide">
         <template #trigger>
                 <div
                     class="panel-heading"
@@ -46,7 +46,7 @@
         </div>
 
       </b-collapse>
-      <b-collapse class='panel' v-model="openC2" style="margin-top:-20px">
+      <b-collapse class='panel' v-model="openC2" style="margin-top:-20px" animation="slide">
         <template #trigger>
                 <div
                     class="panel-heading"
@@ -73,12 +73,14 @@
           <b-switch style="margin-top:1em;vertical-align:middle" v-model="predict" v-if="showPredict" @input="togglePredict()">前週資訊</b-switch>
           </b-tooltip><br>
           <b-switch style="margin-top:1em;vertical-align:middle" v-model="meme" v-show="!mobile" @input="toggleMeme()">迷因先生</b-switch>
-        <div id='bottom'>
+          <transition name="fade">
+        <div id='bottom' v-show="!(openC1 || openC2) && windowHeight >= 420">
            <a href="https://tonyyu.taipei" style="color: rgb(200,200,200)">2022 Tony Yu </a>
           <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">| 來源 </a>
           <br>
-         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">2022-04-13v4</a>
+         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">2022-04-14</a>
     </div>
+    </transition>
     </div>
 
 
@@ -154,6 +156,7 @@ export default {
       mobile:false,
       menuOptions:"☰",
       windowWidth:0,
+      windowHeight:0,
       buttonType:[],
       isLoading:false,
       showBtn:false,
@@ -228,7 +231,7 @@ export default {
     };
   },
   created: function () {
-    this.getAllDate(), this.getAllLocations();this.windowWidth = window.innerWidth;if(this.windowWidth <1107){this.mobile=true}
+    this.getAllDate(), this.getAllLocations();this.windowWidth = window.innerWidth;if(this.windowWidth <1107){this.mobile=true};this.windowHeight = window.innerHeight;
   },
   computed: {
     console: () => console,
@@ -267,6 +270,7 @@ export default {
           this.meme = false
 
         }
+        this.windowHeight = window.innerHeight
 
     }
     setInterval(()=>{
@@ -831,7 +835,7 @@ background: linear-gradient(90deg, rgba(170,102,232,1) 0%, rgba(0,61,124,1) 100%
     min-height:750px;
     height:100vh;
     background-color:rgba(0,0,0,0.5);
-    overflow:auto;
+    overflow-y:auto;
 
 
     margin-bottom: 0px;
@@ -960,6 +964,8 @@ canvas{
   width:100%;
   margin-right:auto;
   height: 30px;
+  position:absolute;
+  bottom:2em
   
   
 }
@@ -967,11 +973,13 @@ canvas{
   border-radius: 0px 0px 0px 0px;
   font-size:1em;
   padding:.6em .1em;
+
 }
+
 .panel-block:last-child{
   border-bottom-left-radius: 0px;
   border-bottom-right-radius: 0px;
-  background-color: rgba(0,0,0,0.3);
+  background-color: rgba(17, 15, 15, 0.3);
 }
 .btn-container{
 
@@ -1001,4 +1009,6 @@ loading-content{
         70% { transform: scale(1.1,.9) translateY(0px); }
         100% { transform: scale(1,1)    translateY(0); }
     }
+
+
 </style>
