@@ -3,7 +3,7 @@
 
     <div id="fixedLogo">
     <img src="https://tonyyu.taipei/ico/logo@100.png" onclick="window.location.href ='../index.html'" id=logo style="cursor:pointer;"></div>
-    <b-loading :is-full-page="isFullPage" v-model="isLoading" :can-cancel="false">
+      <b-loading :is-full-page="isFullPage" v-model="isLoading" :can-cancel="false">
       <loading-content>
         <img src="../GymHead.svg" id="svgComponent"/>
       </loading-content>
@@ -85,7 +85,7 @@
            <a href="https://tonyyu.taipei" style="color: rgb(200,200,200)">2022 Tony Yu </a>
           <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">| 來源 </a>
           <br>
-         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">2022-04-14</a>
+         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">2022-04-15</a>
     </div>
     </transition>
     </div>
@@ -126,6 +126,7 @@ library.add(faCheck, faCheckCircle, faInfoCircle, faExclamationTriangle, faExcla
 Vue.component('vue-fontawesome', FontAwesomeIcon);
 
 import { mdiInformation } from '@mdi/js';
+import axiosRetry from 'axios-retry'
 import Vue from "vue";
 import Buefy from "buefy";
 import axios from "axios";
@@ -136,6 +137,9 @@ import isSameDay from 'date-fns/isSameDay';
 import isWithinInterval from 'date-fns/isWithinInterval';
 import setHours from 'date-fns/setHours'
 const apiUrl = "https://tonyyu.taipei:1337"
+axiosRetry(axios, { retries: 3 ,retryDelay:(retryCount)=>{
+  return retryCount * 1000;
+}});
 Vue.use(Buefy,{
     defaultIconComponent: 'vue-fontawesome',
   defaultIconPack: 'fas',
@@ -352,6 +356,23 @@ export default {
         res.data.forEach((time) => {
           this.allDate.push(time);
         });
+      }).catch(err=>{
+        this.isLoading=false;
+        this.showChart = false;
+        this.$buefy.notification.open({
+          type: 'is-danger',
+          position:'is-top',
+          closable:true,
+          duration:99999,
+          message:`<strong>與伺服器無法連線，五秒後重試...</strong><br><span style="font-size:10px">詳細錯誤資訊如下：${err}<span>`,
+          hasIcon: true
+        })
+        setTimeout(()=>{
+          window.location.reload();
+        },5000)
+
+
+    
       });
     },
     getAllLocations() {
@@ -365,8 +386,7 @@ export default {
           this.buttonType = new Array(this.locationsShort.length)
           this.showChart = true
         });
-      });
-      
+      })
     },
     async selectLocation(name,buttonId,reselect) {
       this.refresh = true
@@ -418,7 +438,21 @@ export default {
       }
        let res = await axios.get(`${apiUrl}/data/date`, {
           params: { date: this.selectedDate },
+        }).catch(err=>{
+        this.isLoading=false;
+        this.showChart = false;
+        this.$buefy.notification.open({
+          type: 'is-danger',
+          position:'is-top',
+          closable:true,
+          duration:99999,
+          message:`<strong>與伺服器無法連線，五秒後重試...</strong><br><span style="font-size:10px">詳細錯誤資訊如下：${err}<span>`,
+          hasIcon: true
         })
+        setTimeout(()=>{
+          window.location.reload();
+        },5000)
+      })
         
           return new Promise(resolve =>{
           setTimeout(async() =>{
@@ -581,38 +615,51 @@ export default {
                 }
                         this.chartData.datasets[this.chartID].data.push(this.chartData.datasets[this.chartID-1].data[this.chartData.datasets[this.chartID-1].data.length-1]);
 
-                await new Promise(resolve=>{
-                  var baselineEst = 0;
-                  var baseline = 0;
-                  var baseDiff = 0;
-                  var maxPeo =processedData[0][0].locationPeople[this.selShortID].maxPeo;
-                    for(let a = 0;a<processedData[0].length;a++){
-                        var estPeo = 0;
-                        for(let i = 0;i < processedData.length;i++){
-                          estPeo += parseInt(processedData[i][a].locationPeople[this.selShortID].peoNum);
-                        }
-                        // estPeo = estPeo / processedData.length;
-                        this.chartData.datasets[this.chartID].borderDash = [8,5] //點狀圖
-                        if(a != 0){
-                          let sendData = Math.round(estPeo-baseDiff);
-                          if(sendData > maxPeo){
-                            sendData = maxPeo;
-                          }else if(sendData <=0){
-                            sendData = 0;
+                await new Promise((resolve, reject) =>{
+                  try{
+                    var baselineEst = 0;
+                    var baseline = 0;
+                    var baseDiff = 0;
+                    var maxPeo =processedData[0][0].locationPeople[this.selShortID].maxPeo;
+                      for(let a = 0;a<processedData[0].length;a++){
+                          var estPeo = 0;
+                          for(let i = 0;i < processedData.length;i++){
+                            estPeo += parseInt(processedData[i][a].locationPeople[this.selShortID].peoNum);
                           }
-                        if(sendData > this.options.scales.yAxes[0].ticks.max){
-                          this.options.scales.yAxes[0].ticks.max = sendData%10==0?sendData:Math.ceil(sendData/10)*10;
-                    }
-                          this.chartData.datasets[this.chartID].data.push(sendData);
-                        }else{
-                          baselineEst = estPeo;
-                          baseline = this.chartData.datasets[this.chartID-1].data[this.chartData.datasets[this.chartID-1].data.length-1];
-                          baseDiff = baselineEst - baseline
-                        }
-                        if(a == processedData[0].length-1)
-                        resolve();
-                    }
-
+                          // estPeo = estPeo / processedData.length;
+                          this.chartData.datasets[this.chartID].borderDash = [8,5] //點狀圖
+                          if(a != 0){
+                            let sendData = Math.round(estPeo-baseDiff);
+                            if(sendData > maxPeo){
+                              sendData = maxPeo;
+                            }else if(sendData <=0){
+                              sendData = 0;
+                            }
+                          if(sendData > this.options.scales.yAxes[0].ticks.max){
+                            this.options.scales.yAxes[0].ticks.max = sendData%10==0?sendData:Math.ceil(sendData/10)*10;
+                      }
+                            this.chartData.datasets[this.chartID].data.push(sendData);
+                          }else{
+                            baselineEst = estPeo;
+                            baseline = this.chartData.datasets[this.chartID-1].data[this.chartData.datasets[this.chartID-1].data.length-1];
+                            baseDiff = baselineEst - baseline
+                          }
+                          if(a == processedData[0].length-1)
+                          resolve();
+                      }
+                  }catch(e){
+                    this.showChart = true;
+                    this.isLoading = false;
+                    this.$buefy.notification.open({
+                      type: 'is-warning',
+                      position:'is-bottom-right',
+                      pauseOnHover:true,
+                      message:`<strong>錯誤：無法預測</strong><br>${name}因缺乏前週數據，無法預測`
+                    })
+                    this.refresh = true;
+                    this.c
+                    reject(e);
+                  }
                 })
 
               }
@@ -1002,7 +1049,7 @@ canvas{
 
   }
 loading-content{
-  height: 105px;
+  height: 120px;
   width:100px;
   position: absolute;
 }
