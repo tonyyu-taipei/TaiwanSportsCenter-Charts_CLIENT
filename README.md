@@ -13,7 +13,7 @@
 ```
 https://tonyyu.taipei:1337
 ```
-可在 /src/App.vue中，修改您的apiURL
+可在 /src/App.vue中，修改您的API URL
 
 
 
@@ -39,7 +39,7 @@ https://tonyyu.taipei:1337
 	},
 ]
 ```
-short為健身房縮寫、peoNum為當下人數、maxPeo為最多人數
+short為健身房英文代碼、peoNum為當下人數、maxPeo為最多人數
 
 2. /data/date：將抓取所有資料之日期與時間（上方time）
 ```json
