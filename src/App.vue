@@ -85,7 +85,7 @@
            <a href="https://tonyyu.taipei" style="color: rgb(200,200,200)">2022 Tony Yu </a>
           <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">| 來源 </a>
           <br>
-         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">2022-04-15</a>
+         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">2025-07-08</a>
     </div>
     </transition>
     </div>
@@ -136,7 +136,7 @@ import subDays from 'date-fns/subDays';
 import isSameDay from 'date-fns/isSameDay';
 import isWithinInterval from 'date-fns/isWithinInterval';
 import setHours from 'date-fns/setHours'
-const apiUrl = "https://tonyyu.taipei:1337"
+const apiUrl = "https://tonyyu.taipei/sports_center_api/"; //API網址
 axiosRetry(axios, { retries: 3 ,retryDelay:(retryCount)=>{
   return retryCount * 1000;
 }});
