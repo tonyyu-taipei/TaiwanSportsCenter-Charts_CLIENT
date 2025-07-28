@@ -82,10 +82,10 @@
           <b-switch style="margin-top:1em;vertical-align:middle" v-model="meme" v-show="!mobile" @input="toggleMeme()">迷因先生</b-switch>
           <transition name="fade">
         <div id='bottom' v-show="!(openC1 || openC2) && windowHeight >= 420">
-           <a href="https://tonyyu.taipei" style="color: rgb(200,200,200)">2022 Tony Yu </a>
+           <a href="https://tonyyu.taipei" style="color: rgb(200,200,200)">Tony Yu </a>
           <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">| 來源 </a>
           <br>
-         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">2025-07-08</a>
+         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">2025-07-28</a>
     </div>
     </transition>
     </div>
@@ -242,7 +242,7 @@ export default {
     };
   },
   created: function () {
-    this.getAllDate(), this.getAllLocations();this.windowWidth = window.innerWidth;if(this.windowWidth <1107){this.mobile=true};this.windowHeight = window.innerHeight;
+    this.getAllDate(), this.getAllLocations();this.windowWidth = window.innerWidth;if(this.windowWidth <1107){this.mobile=true}this.windowHeight = window.innerHeight;
   },
   computed: {
     console: () => console,
@@ -455,7 +455,6 @@ export default {
       })
         
           return new Promise(resolve =>{
-          setTimeout(async() =>{
                 let resData = res.data;
                 if(resData.length === 0 ){
                   this.$buefy.notification.open({
@@ -468,7 +467,8 @@ export default {
                     this.showChart = true;
                     return 0;
                 }
-                resData.forEach(async(input) => { /*
+                for(let input of resData){
+                  /*
                 伺服器這時候回傳的數值會是[{time:new Date();locationPeople:[];id:id}
                 ]
 
@@ -511,7 +511,7 @@ export default {
                   if(!addedIn){
                     this.chartData.datasets[this.chartID].data.push(undefined)
                   }
-              })
+              }
               let predictFun = async()=>{
 
                 //下面得出最後兩筆資料的時間差
@@ -671,7 +671,6 @@ export default {
             })
 
 
-              },750);
           })   
       
 
