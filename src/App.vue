@@ -22,9 +22,7 @@
           :mobile-native="false"
           :max-date="maxDate"
           v-model="selectedDate"
-          :unselectable-dates="checkBanned"
-          @input="clearChart('date')"
-          
+          :unselectable-dates="checkBanned"          
           :disable="dateChoose"
         >
         </b-datepicker>
@@ -41,7 +39,7 @@
         </template>
         <div class='panel-block' >
           <div class="btn-container">
-             <b-button v-for="(index, id) in locationsTwoWords" :key="id" v-on:click="selectLocation(index,id)"  :type="buttonType[id]" :disabled="showBtn" class="chart-btn">{{ index }}</b-button>
+             <b-button v-for="(index, id) in locationsTwoWords" :key="id" v-on:click="onSelectLocation(index,id)"  :type="buttonType[id]" :disabled="showBtn" class="chart-btn">{{ index }}</b-button>
           </div>
         </div>
 
@@ -57,7 +55,7 @@
         </template>
         <div class='panel-block' style="">
           <div class="btn-container">
-            <b-button v-for="(index, id) in locationsOthers" :key="id+locationsTwoWords.length" v-on:click="selectLocation(index,id+locationsTwoWords.length)"  :type="buttonType[id+locationsTwoWords.length]" :disabled="showBtn" class="chart-btn" style="float:left">{{ index }}</b-button>
+            <b-button v-for="(index, id) in locationsOthers" :key="id+locationsTwoWords.length" v-on:click="onSelectLocation(index,id+locationsTwoWords.length)"  :type="buttonType[id+locationsTwoWords.length]" :disabled="showBtn" class="chart-btn" style="float:left">{{ index }}</b-button>
           </div>
         </div>
 
@@ -76,7 +74,7 @@
                 </div>
           <b-tooltip label="藉前週與現在資料差預測未來人數趨勢">
             <transition name="slide">
-              <b-switch style="margin-top:1em;vertical-align:middle" v-model="predict" v-if="showPredict" @input="togglePredict()">前週資訊</b-switch>
+              <b-switch style="margin-top:1em;vertical-align:middle" v-model="lastWeek" v-if="showLastWeek" @input="toggleLastWeek()">前週資訊</b-switch>
             </transition>
           </b-tooltip><br>
           <b-switch style="margin-top:1em;vertical-align:middle" v-model="meme" v-show="!mobile" @input="toggleMeme()">迷因先生</b-switch>
@@ -85,7 +83,7 @@
            <a href="https://tonyyu.taipei" style="color: rgb(200,200,200)">Tony Yu </a>
           <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">| 來源 </a>
           <br>
-         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">2025-07-28</a>
+         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">2025-08-18</a>
     </div>
     </transition>
     </div>
@@ -102,9 +100,10 @@
     <b-loading v-model="alwaysTrue" :is-full-page="isFullPage" :can-cancel="false">
       <loading-content>
         <img src="../GymHead.svg" id="svgComponent"/>
-        <!-- <p v-text="loadingEl"></p>如需資料載入中文字，可將此註解解除 -->
-              <b-progress type="is-info" :value="progress" size="is-small"></b-progress> <!--若需要實時進度表，可加:value="progress" -->
+          <b-progress type="is-info" :value="progress" size="is-small"></b-progress> <!--若需要實時進度表，可加:value="progress" -->
+          <p v-text="loadingEl"></p>
 
+              
       </loading-content>
     </b-loading>
       </div>
@@ -151,13 +150,13 @@ export default {
   },
   data() {
     return {
+      isFullPage:true,
       alwaysTrue:true,
-      alertUndefined: 0,
       bannedDays:["2022/1/31","2022/2/1","2022/2/2","2022/2/3","2022/2/4","2022/2/5"],
-      showPredict:false,
+      showLastWeek:false,
       openC1:false,
       openC2:false,
-      predict:false,
+      lastWeek:false,
       refresh:false,
       dateChoose:true,
       reselectOK:false,
@@ -187,7 +186,7 @@ export default {
       selectedLoc: [],
       selectedDate: new Date(),
       showChart: false,
-      colorTemplate:['#ffbff5','#c4ff03','#ffa64d','#fa4d56','#9ef0f0','#f1c21b','#ff7eb6','#f1f1f1','#f1d4d4','#f0b8b8','#ec9c9d','#e67f83','#de6069','#d43d51','#05bcff','#c9ffb3'],
+      colorTemplate:['#ffbff5','#c4ff03','#ffa64d','#fa4d56','#9ef0f0','#f1c21b','#ff7eb6','#f1f1f1','#f1d4d4','#f0b8b8','#ec9c9d','#e67f83','#de6069','#d43d51','#05bcff','#c9ffb3','#00ff88','#ffff00','#ff6b35','#ffffff','#32cd32','#ff1493','#00ffff','#ffd700','#ff4500','#9acd32','#ff69b4','#40e0d0','#ff8c00','#adff2f','#ff00ff','#00fa9a'],
       progress:undefined,
       chartData: {
         labels: [], //時間軸
@@ -219,7 +218,7 @@ export default {
             ticks: {
                 fontColor: 'white',
                 fontSize:18,
-                max:60,
+                max:140,
                 min:0
             },
             gridLines:{
@@ -239,7 +238,43 @@ export default {
           }]
           }
         },
+        serverResponse:undefined,
+        lastWeekServerResponse: undefined,
+        bannedPlace: []
     };
+  },
+  watch:{
+    selectedDate:async function(newDate){
+      this.showChart = false;
+      this.loadingEl = "下載圖表資料...";
+      // this.progress = 0;
+      this.bannedPlace = [];
+      try{
+        this.serverResponse = await axios.get(`${apiUrl}/data/date`, {
+          params: { date: newDate },
+        })
+        this.onDateChange();
+        this.isLoading = false;
+        this.showChart = true;
+        this.loadingEl = "載入中...";
+  
+      }catch(err){
+        console.log(err);
+        this.isLoading=false;
+        this.showChart = false;
+        this.$buefy.notification.open({
+          type: 'is-danger',
+          position:'is-top',
+          closable:true,
+          duration:99999,
+          message:`<strong>與伺服器無法連線，五秒後重試...</strong><br><span style="font-size:10px">詳細錯誤資訊如下：${err}<span>`,
+          hasIcon: true
+        })
+        setTimeout(()=>{
+          window.location.reload();
+        },5000)
+      }
+    }
   },
   created: function () {
     this.getAllDate(), this.getAllLocations();this.windowWidth = window.innerWidth;if(this.windowWidth <1107){this.mobile=true}this.windowHeight = window.innerHeight;
@@ -249,22 +284,27 @@ export default {
     window: () => window,
     locationsTwoWords: function(){
       let res = [];
-     this.locations.forEach(str=>{
+      for(let str of this.locations){
         if (str.length <=2){
           res.push(str)
         }
-      })
+      }
       return res;
     },
     locationsOthers: function(){
       let res = [];
-     this.locations.forEach(str=>{
+      for(let str of this.locations){
         if (str.length >2){
           res.push(str)
         }
-      })
+      }
       return res;
     },
+    // serverReponse: function(){
+    //   return axios.get(`${apiUrl}/data/date`, {
+    //       params: { date: this.selectedDate },
+    //     })
+    // }
 
 
   },
@@ -305,14 +345,14 @@ export default {
       }
     },
     checkBanned(days){
-      this.bannedDays.forEach(data=>{
+      for(let data of this.bannedDays){
         if(`${new Date(data).getMonth()+1}/${new Date(data).getDate()}`==`${new Date(days).getMonth()+1}/${new Date(days).getDate()}`){
           return false
         }
-      })
+      }
     },
 
-    togglePredict(){
+    toggleLastWeek(){
       this.clearChart('date')
     },
     toggleMeme(){
@@ -330,6 +370,8 @@ export default {
       }
     },
     getAllDate() {
+      this.showChart = false;
+      this.loadingEl = "下載日期資料...";
       axios.get(`${apiUrl}/data/date`).then((res) => {
         let tempDate = new Date(res.data[0]);
         this.minDate = new Date(
@@ -347,18 +389,19 @@ export default {
         if(new Date().getDate() == this.selectedDate.getDate()){
           if(new Date().getHours() <= 21 && new Date().getHours()>=6){
             if(new Date().getMinutes() < 45 && new Date().getHours() == 21){
-                        this.showPredict = true;
+                        this.showLastWeek = true;
             }else if(new Date().getHours() != 21){
-                       this.showPredict = true;   
+                       this.showLastWeek = true;   
             }
           }
         }
-        res.data.forEach((time) => {
+        for(let time of res.data){
           this.allDate.push(time);
-        });
+        }
+        this.loadingEl = "載入中..."
       }).catch(err=>{
-        this.isLoading=false;
         this.showChart = false;
+        this.loadingEl ="";
         this.$buefy.notification.open({
           type: 'is-danger',
           position:'is-top',
@@ -377,18 +420,25 @@ export default {
     },
     getAllLocations() {
 
-      this.isLoading = true;
       axios.get(`${apiUrl}/locations`).then((res) => {
-        this.isLoading=false;
-        res.data.forEach((location) => {
+        for(let location of res.data){
           this.locations.push(location.name);
           this.locationsShort.push(location.short);
           this.buttonType = new Array(this.locationsShort.length)
-          this.showChart = true
-        });
+        }
       })
     },
-    async selectLocation(name,buttonId,reselect) {
+    async onSelectLocation(name,buttonId,reselect) {
+      try{
+      if(this.bannedPlace.includes(name)){
+        this.$buefy.notification.open({
+          type: 'is-danger',
+          position:'is-top',
+          message:`<strong>${name}無法載入，請選擇其他場館</strong>`,
+          hasIcon: true
+        })
+        return 0;
+      }
       this.refresh = true
       this.menuOptions = "☰";
       if(this.windowWidth <=1107 ){
@@ -401,294 +451,334 @@ export default {
       this.buttonType[buttonId] = "is-primary";
       const randomNum = () => Math.floor(Math.random() * (235 - 140 + 1) + 140);
       
+      // 重複按鈕時，更換按鈕顏色
       if(this.selectedLoc.includes(name)&&!reselect){ //若已經選取則進行動作
         
           this.menuOptions = "☰";
           let index = this.selectedLoc.indexOf(name);
         this.colorTemplate[index] = `rgb(${randomNum()},${randomNum()},${randomNum()})`//換顏色，同時原陣列也更改
-        if(this.predict&&this.showPredict){
-        let predictColorIndex = this.selectedLoc.indexOf(name)*2;
-        this.chartData.datasets[predictColorIndex].borderColor = this.colorTemplate[index]
-        this.chartData.datasets[predictColorIndex+1].borderColor = this.colorTemplate[index]
-        }else{
-          this.chartData.datasets[index].borderColor = this.colorTemplate[index]
-        }
-        /*this.$buefy.notification.open({
-          type: 'is-warning',
-          position:'is-bottom-right',
-          pauseOnHover:true,
-          message:'顏色已更改'
-        })*/
-        this.chartData ={
-        ... this.chartData
-      }
-        return 0;
+            if(this.lastWeek&&this.showLastWeek){
+            let lastWeekColorIndex = this.selectedLoc.indexOf(name)*2;
+            this.chartData.datasets[lastWeekColorIndex].borderColor = this.colorTemplate[index]
+            this.chartData.datasets[lastWeekColorIndex+1].borderColor = this.colorTemplate[index]
+            }else if(this.chartData.datasets[index].length != 0){
+              this.chartData.datasets[index].borderColor = this.colorTemplate[index]
+              return
+            }
+            
+            this.$buefy.notification.open({
+              type: 'is-info',
+              position:'is-bottom-right',
+              pauseOnHover:true,
+              message:'顏色已更改'
+            })
+            this.chartData ={
+            ... this.chartData
+          }
+         return 0;
         }
       
       this.selectedLoc.push(name);
       this.selectedID.push(buttonId)
       this.chartData.labels = [];
+      console.log("setting chartId:" + this.chartID)
       if(this.chartID == 0)
       this.chartData.datasets = [];
       this.chartData.datasets.push({});
       this.chartData.datasets[this.chartID].data = [];
-      if(!reselect){
-        this.clearToggle = true;
-        this.isLoading=true;
-      }
-       let res = await axios.get(`${apiUrl}/data/date`, {
-          params: { date: this.selectedDate },
-        }).catch(err=>{
-        this.isLoading=false;
-        this.showChart = false;
-        this.$buefy.notification.open({
-          type: 'is-danger',
-          position:'is-top',
-          closable:true,
-          duration:99999,
-          message:`<strong>與伺服器無法連線，五秒後重試...</strong><br><span style="font-size:10px">詳細錯誤資訊如下：${err}<span>`,
-          hasIcon: true
-        })
-        setTimeout(()=>{
-          window.location.reload();
-        },5000)
-      })
-        
-          return new Promise(resolve =>{
-                let resData = res.data;
-                if(resData.length === 0 ){
-                  this.$buefy.notification.open({
-                      type: 'is-warning',
-                      position:'is-bottom-right',
-                      pauseOnHover:true,
-                      message:'此日期無資料'
-                    })
-                    this.isLoading = false;
-                    this.showChart = true;
-                    return 0;
-                }
-                for(let input of resData){
-                  /*
-                伺服器這時候回傳的數值會是[{time:new Date();locationPeople:[];id:id}
-                ]
+      let res = null;
+      res = this.serverResponse
+      return new Promise(resolve =>{
+            let resData = res.data;
+            if(resData.length === 0 ){
+              this.$buefy.notification.open({
+                  type: 'is-warning',
+                  position:'is-bottom-right',
+                  pauseOnHover:true,
+                  message:'此日期無資料'
+                })
+                return 0;
+            }
+            for(let input of resData){
+              /*
+            伺服器這時候回傳的數值會是[{time:new Date();locationPeople:[];id:id}
+            ]
 
-                所以每個陣列是使用日期時間來隔開，因此，下面要確定時間日期是否符合
-                */
-                //每次回傳出來的資料都會是一個時間，可以利用這些時間的資料來找出圖表的X軸
-                let timeHour = `${new Date(input.time).getHours()}`
-                if(timeHour < 10)
-                timeHour = '0'+timeHour;
-                let timeMin = `${new Date(input.time).getMinutes()}`
-                if(timeMin <10)
-                timeMin = '0'+timeMin;
-                this.chartData.labels.push(
-                  `${timeHour}:${timeMin}`
-                );
-                let indexOfShort = this.locations.indexOf(name)
-                this.chartData.datasets[this.chartID].backgroundColor = "rgba(255,255,255,0.1)";
-                this.chartData.datasets[this.chartID].label = name
-                if(this.predict&&this.showPredict){
-                  this.chartData.datasets[this.chartID].borderColor = this.colorTemplate[this.chartID/2];
+            所以每個陣列是使用日期時間來隔開，因此，下面要確定時間日期是否符合
+            */
+            //每次回傳出來的資料都會是一個時間，可以利用這些時間的資料來找出圖表的X軸
+            let timeHour = `${new Date(input.time).getHours()}`
+            if(timeHour < 10)
+            timeHour = '0'+timeHour;
+            let timeMin = `${new Date(input.time).getMinutes()}`
+            if(timeMin <10)
+            timeMin = '0'+timeMin;
+            this.chartData.labels.push(
+              `${timeHour}:${timeMin}`
+            );
+            let indexOfShort = this.locations.indexOf(name)
+            this.chartData.datasets[this.chartID].backgroundColor = "rgba(255,255,255,0.1)";
+            this.chartData.datasets[this.chartID].label = name
+            if(this.lastWeek&&this.showLastWeek){
+              this.chartData.datasets[this.chartID].borderColor = this.colorTemplate[this.chartID/2];
 
+            }
+            else{
+              this.chartData.datasets[this.chartID].borderColor = this.colorTemplate[this.chartID];
+            }
+            let addedIn = false;
+            let shortIndex = 0;
+            for(let secInput of input.locationPeople){
+              if (secInput.short == this.locationsShort[indexOfShort]) {
+                this.chartData.datasets[this.chartID].data.push(parseInt(secInput.peoNum));
+                if(secInput.peoNum > this.options.scales.yAxes[0].ticks.max){
+                  this.options.scales.yAxes[0].ticks.max = secInput.peoNum%10==0?secInput.peoNum:Math.ceil(secInput.peoNum/10)*10;
+                  this.ckey++;
                 }
-                else{
-                  this.chartData.datasets[this.chartID].borderColor = this.colorTemplate[this.chartID];
-                }
-                let addedIn = false;
-                let shortIndex = 0;
-                input.locationPeople.forEach((secInput) => {
-                  if (secInput.short == this.locationsShort[indexOfShort]) {
-                    this.chartData.datasets[this.chartID].data.push(parseInt(secInput.peoNum));
-                    if(secInput.peoNum > this.options.scales.yAxes[0].ticks.max){
-                      this.options.scales.yAxes[0].ticks.max = secInput.peoNum%10==0?secInput.peoNum:Math.ceil(secInput.peoNum/10)*10;
-                    }
-                    addedIn = true;
-                  }
-                  if(!addedIn)
-                  shortIndex = shortIndex + 1
-                });
-                this.selShortID = shortIndex;
-                  if(!addedIn){
-                    this.chartData.datasets[this.chartID].data.push(undefined)
-                  }
+                addedIn = true;
               }
-              let predictFun = async()=>{
+              if(!addedIn)
+              shortIndex = shortIndex + 1
+            }
 
-                //下面得出最後兩筆資料的時間差
-                let selectedFullDate = this.selectedDate.getFullYear()+"/"+(this.selectedDate.getMonth()+1)+"/"+this.selectedDate.getDate();
+            this.selShortID = shortIndex;
+              if(!addedIn){
+                this.chartData.datasets[this.chartID].data.push(undefined)
+              }
+          }
+          let lastWeekFun = async()=>{
 
-                let date1 = new Date(selectedFullDate+" "+this.chartData.labels[this.chartData.labels.length-1])
-                let date2 = new Date(selectedFullDate+" "+this.chartData.labels[this.chartData.labels.length-2])
-                let minDiff = new Date(date1-date2).getMinutes();
-                let lastTime = this.chartData.labels[this.chartData.labels.length-1];
-                let lastHour = lastTime.split(":")[0];
-                let lastMin = lastTime.split(":")[1];
-                let predictDateVal = [];
-                predictDateVal.push(new Date(`${selectedFullDate} ${lastHour}:${lastMin}`)) //0128
-                while(this.chartData.labels[this.chartData.labels.length-1].split(":")[0] < 22 && this.chartData.labels[this.chartData.labels.length-1].split(":")[0] > 5){
+            //下面得出最後兩筆資料的時間差
+            let selectedFullDate = this.selectedDate.getFullYear()+"/"+(this.selectedDate.getMonth()+1)+"/"+this.selectedDate.getDate();
 
-                    lastHour = parseInt(lastHour)
-                    lastMin = parseInt(lastMin)
+            let date1 = new Date(selectedFullDate+" "+this.chartData.labels[this.chartData.labels.length-1])
+            let date2 = new Date(selectedFullDate+" "+this.chartData.labels[this.chartData.labels.length-2])
+            let minDiff = new Date(date1-date2).getMinutes();
+            let lastTime = this.chartData.labels[this.chartData.labels.length-1];
+            let lastHour = lastTime.split(":")[0];
+            let lastMin = lastTime.split(":")[1];
+            let lastWeekDateVal = [];
+            lastWeekDateVal.push(new Date(`${selectedFullDate} ${lastHour}:${lastMin}`)) //0128
+            while(this.chartData.labels[this.chartData.labels.length-1].split(":")[0] < 22 && this.chartData.labels[this.chartData.labels.length-1].split(":")[0] > 5){
 
-                    lastMin+=minDiff
-                    if(lastMin >= 60){
-                      lastHour++;
-                    lastMin = lastMin - 60;
-                    }
-                    if(lastHour < 10){
-                      lastHour = '0'+lastHour;
-                    }
-                    if(lastMin < 10){
-                      lastMin = '0'+lastMin
-                    }
-                    if(lastHour != 22 ){
-                  this.chartData.labels.push(`${lastHour}:${lastMin}`)
-                  predictDateVal.push(new Date(`${selectedFullDate} ${lastHour}:${lastMin}`))
-                    }else{
-                      break;
-                    }
-                  }
-              if(this.predict && this.showPredict && (new Date(this.selectedDate).getDate() == new Date().getDate())&&(new Date().getHours()<=21 )){
-                 let setPredictDays = [];
-                this.allDate.forEach(data=>{
-        
-                    for(let ban of this.bannedDays){
-                    if(`${new Date(ban).getMonth()+1}/${new Date(ban).getDate()}`==`${subDays(this.selectedDate,7).getMonth()+1}}/${subDays(this.selectedDate,7).getDate()}`){
-                      this.showPredict = false;
-                      this.predict = false;
-                    break;
-                    }
-                    if(new Date(data).getDate() == subDays(this.selectedDate,7).getDate()&&!isSameDay(new Date(setPredictDays[0]),new Date(data))){
-                    // if(new Date(data).getDate() == subDays(this.selectedDate,7).getDate()&&(new Date(setPredictDays[0]).getDate() != new Date(data).getDate())){
-                    setPredictDays[0] = data;
-                    }
-                  }
-                  
-                })
-                if(setPredictDays.length == 0){
-                  this.update(reselect)
-                  resolve();
+                lastHour = parseInt(lastHour)
+                lastMin = parseInt(lastMin)
+
+                lastMin+=minDiff
+                if(lastMin >= 60){
+                  lastHour++;
+                lastMin = lastMin - 60;
                 }
-                let predictMainData = [];
-                let getSecDate = async(days)=>{
-                      return await axios.get(`${apiUrl}/data/date`, {
-                      params: { date: days },
-                      }) //這裏存粹就是弄一個方法在這裡，後續不會調用此方法
+                if(lastHour < 10){
+                  lastHour = '0'+lastHour;
                 }
-                await new Promise(resolve=>{
-                  for(let days of setPredictDays){ 
-                   getSecDate(days).then(res2 =>{
-                         predictMainData.push(res2.data); //在這裡將欲預測資料push進predictMainData中，0第一週 1第二週 2第三週
-                         if(predictMainData.length == setPredictDays.length){
-                            resolve();
-                            
-                         }
-                      })
-                    }
-                })
-
-                let date = new Date();
-                let processData = predictMainData[0]
-                let processedData = [];
-                let tempData = [];
-                predictDateVal.forEach((dateVal)=>{
-                  date = subDays(new Date(dateVal),7)
-                  
-
-                  let ans = processData.reduce((prev,curr)=>{
-                              return Math.abs( new Date(date)-new Date(prev.time)) < Math.abs(new Date(date)-new Date(curr.time)) ? prev: curr;
-                            });
-                  tempData.push(ans);
-                  
-                })  
-                processedData[0] = tempData
-                
-            
-                this.chartID++;
-                this.chartData.datasets.push({});
-                this.chartData.datasets[this.chartID].data = [];
-                this.chartData.datasets[this.chartID].backgroundColor = "rgba(255,255,255,0.1)";
-                this.chartData.datasets[this.chartID].label = name+"(預測)"
-                this.chartData.datasets[this.chartID].borderColor = this.colorTemplate[(this.chartID-1)/2];
-                for(let i = 1; i< this.chartData.datasets[this.chartID-1].data.length;i++){
-                        this.chartData.datasets[this.chartID].data.push(undefined);
+                if(lastMin < 10){
+                  lastMin = '0'+lastMin
                 }
-                        this.chartData.datasets[this.chartID].data.push(this.chartData.datasets[this.chartID-1].data[this.chartData.datasets[this.chartID-1].data.length-1]);
-
-                await new Promise((resolve, reject) =>{
-                  try{
-                    var baselineEst = 0;
-                    var baseline = 0;
-                    var baseDiff = 0;
-                    var maxPeo =processedData[0][0].locationPeople[this.selShortID].maxPeo;
-                      for(let a = 0;a<processedData[0].length;a++){
-                          var estPeo = 0;
-                          for(let i = 0;i < processedData.length;i++){
-                            estPeo += parseInt(processedData[i][a].locationPeople[this.selShortID].peoNum);
-                          }
-                          // estPeo = estPeo / processedData.length;
-                          this.chartData.datasets[this.chartID].borderDash = [8,5] //點狀圖
-                          if(a != 0){
-                            let sendData = Math.round(estPeo-baseDiff);
-                            if(sendData > maxPeo){
-                              sendData = maxPeo;
-                            }else if(sendData <=0){
-                              sendData = 0;
-                            }
-                          if(sendData > this.options.scales.yAxes[0].ticks.max){
-                            this.options.scales.yAxes[0].ticks.max = sendData%10==0?sendData:Math.ceil(sendData/10)*10;
-                      }
-                            this.chartData.datasets[this.chartID].data.push(sendData);
-                          }else{
-                            baselineEst = estPeo;
-                            baseline = this.chartData.datasets[this.chartID-1].data[this.chartData.datasets[this.chartID-1].data.length-1];
-                            baseDiff = baselineEst - baseline
-                          }
-                          if(a == processedData[0].length-1)
-                          resolve();
-                      }
-                  }catch(e){
-                    this.showChart = true;
-                    this.isLoading = false;
-                    this.$buefy.notification.open({
-                      type: 'is-warning',
-                      position:'is-bottom-right',
-                      pauseOnHover:true,
-                      message:`<strong>錯誤：無法預測</strong><br>${name}因缺乏前週數據，無法預測`
-                    })
-                    this.refresh = true;
-                    this.c
-                    reject(e);
-                  }
-                })
-
+                if(lastHour != 22 ){
+              this.chartData.labels.push(`${lastHour}:${lastMin}`)
+              lastWeekDateVal.push(new Date(`${selectedFullDate} ${lastHour}:${lastMin}`))
+                }else{
+                  break;
+                }
+              }
+          if(this.lastWeek && this.showLastWeek && (new Date(this.selectedDate).getDate() == new Date().getDate())&&(new Date().getHours()<=21 )){
+              let setLastWeekDays = [];
+            for(let data of this.allDate){
+    
+                for(let ban of this.bannedDays){
+                if(`${new Date(ban).getMonth()+1}/${new Date(ban).getDate()}`==`${subDays(this.selectedDate,7).getMonth()+1}}/${subDays(this.selectedDate,7).getDate()}`){
+                  this.showLastWeek = false;
+                  this.lastWeek = false;
+                break;
+                }
+                if(new Date(data).getDate() == subDays(this.selectedDate,7).getDate()&&!isSameDay(new Date(setLastWeekDays[0]),new Date(data))){
+                // if(new Date(data).getDate() == subDays(this.selectedDate,7).getDate()&&(new Date(setLastWeekDays[0]).getDate() != new Date(data).getDate())){
+                setLastWeekDays[0] = data;
+                }
               }
             }
-              predictFun().then(()=>{
-                this.update(reselect)
-                resolve();
 
+            if(setLastWeekDays.length == 0){
+              this.update(reselect)
+              resolve();
+            }
+            let lastWeekMainData = [];
+            let getSecDate = async(days)=>{
+                  if(this.lastWeekServerResponse == undefined || this.lastWeekServerResponse == null){
+                  this.lastWeekServerResponse = await axios.get(`${apiUrl}/data/date`, {
+                  params: { date: days },
+                  }) 
+                }
+                return this.lastWeekServerResponse;
+            }
+            await new Promise(resolve=>{
+              for(let days of setLastWeekDays){ 
+                getSecDate(days).then(res2 =>{
+                      lastWeekMainData.push(res2.data); //在這裡將欲預測資料push進lastWeekMainData中，0第一週 1第二週 2第三週
+                      if(lastWeekMainData.length == setLastWeekDays.length){
+                        resolve();
+                        
+                      }
+                  })
+                }
             })
 
+            let date = new Date();
+            let processData = lastWeekMainData[0]
+            let processedData = [];
+            let tempData = [];
+            for(let dateVal of lastWeekDateVal){
+              date = subDays(new Date(dateVal),7)
+              
 
-          })   
+              let ans = processData.reduce((prev,curr)=>{
+                          return Math.abs( new Date(date)-new Date(prev.time)) < Math.abs(new Date(date)-new Date(curr.time)) ? prev: curr;
+                        });
+              tempData.push(ans);
+              
+            }
+            processedData[0] = tempData
+            
+        
+            this.chartID++;
+            console.log("adding chartID:"+this.chartID)
+            this.chartData.datasets.push({});
+            this.chartData.datasets[this.chartID].data = [];
+            this.chartData.datasets[this.chartID].backgroundColor = "rgba(255,255,255,0.1)";
+            this.chartData.datasets[this.chartID].label = name+"(前週資訊)"
+            this.chartData.datasets[this.chartID].borderColor = this.colorTemplate[(this.chartID-1)/2];
+            for(let i = 1; i< this.chartData.datasets[this.chartID-1].data.length;i++){
+                    this.chartData.datasets[this.chartID].data.push(undefined);
+            }
+                    this.chartData.datasets[this.chartID].data.push(this.chartData.datasets[this.chartID-1].data[this.chartData.datasets[this.chartID-1].data.length-1]);
+            await new Promise((resolve, reject) =>{
+              try{
+                var baselineEst = 0;
+                var baseline = 0;
+                var baseDiff = 0;
+              
+                var maxPeo =processedData[0][0].locationPeople[this.selShortID].maxPeo;
+                  for(let a = 0;a<processedData[0].length;a++){
+                      var estPeo = 0;
+                      for(let i = 0;i < processedData.length;i++){
+                        estPeo += parseInt(processedData[i][a].locationPeople[this.selShortID].peoNum);
+                      }
+                      // estPeo = estPeo / processedData.length;
+                      this.chartData.datasets[this.chartID].borderDash = [8,5] //點狀圖
+                      if(a != 0){
+                        let sendData = Math.round(estPeo-baseDiff);
+                        if(sendData > maxPeo){
+                          sendData = maxPeo;
+                        }else if(sendData <=0){
+                          sendData = 0;
+                        }
+                      if(sendData > this.options.scales.yAxes[0].ticks.max){
+                        this.options.scales.yAxes[0].ticks.max = sendData%10==0?sendData:Math.ceil(sendData/10)*10;
+                  }
+                        this.chartData.datasets[this.chartID].data.push(sendData);
+                      }else{
+                        baselineEst = estPeo;
+                        baseline = this.chartData.datasets[this.chartID-1].data[this.chartData.datasets[this.chartID-1].data.length-1];
+                        baseDiff = baselineEst - baseline
+                      }
+                      if(a == processedData[0].length-1)
+                      resolve();
+                  }
+                  
+              }catch(e){
+                this.showChart = true;
+                this.isLoading = false;
+                this.$buefy.notification.open({
+                  type: 'is-warning',
+                  position:'is-bottom-right',
+                  pauseOnHover:true,
+                  message:`<strong>錯誤：</strong><br>${name}無法顯示前週數據。`
+                })
+                this.refresh = true;
+                this.showBtn = false;
+                this.chartData.datasets.splice(this.chartID,1);
+                this.bannedPlace.push(name);
+                this.buttonType[buttonId] = undefined;
+                this.chartID--;
+                console.log("702 deducting chartID:"+this.chartID)
+                if(this.selectedLoc.includes(name)){
+                  this.selectedLoc.splice(this.selectedLoc.indexOf(name),1);
+                  this.selectedID.splice(this.selectedID.indexOf(buttonId),1);
+                }
+                if(this.lastWeek){
+                  this.chartData.datasets.splice(this.chartID,1);
+                
+                this.chartID--;
+                console.log("703 deducting chartID:"+this.chartID)
+                }
+                this.ckey++;
+                console.error(e);
+                reject(e);
+              }
+            })
+
+          }
+        }
+        if(!this.bannedPlace.includes(name)){
+          lastWeekFun().then(()=>{
+            this.update(reselect)
+            resolve();
+
+        }).catch(()=>{
+          this.update(reselect)
+          resolve();
+        })
+      }
+
+
+      })   
       
 
-    },
+    }
+    catch(err){
+      console.error(err);
+      this.isLoading = false;
+      this.showChart = true;
+      this.$buefy.notification.open({
+        type: 'is-danger',
+        position:'is-top',
+        closable:true,
+        duration:99999,
+        message:`<strong>程式錯誤</strong><br><span style="font-size:10px">詳細錯誤資訊如下：${err}<span><br>請聯絡管理員修正`,
+        hasIcon: true
+      })
+    }
+  },
    async update(reselect){
-              this.chartData.datasets.forEach(data=>{
+              for(let data of  this.chartData.datasets){
+                if(data.label == undefined || data.data == undefined){
+                  this.chartData.datasets.splice(this.chartData.datasets.indexOf(data),1);
+                  continue;
+                }
+                if(data.data.length == 0){
+                  continue;
+                }
+                let alertUndefined = 0;
                 let alreadyShown = false;
-               data.data.forEach(num=>{
+                let corruptedData = false;
+               for(let num of data.data){
                  if(num == undefined){
-                   this.alertUndefined++;
+                   alertUndefined++;
+                   corruptedData = true;
                    //use buefy alert
 
                  }else{
-                    this.alertUndefined = 0;
+                    alertUndefined = 0;
                  }
 
-               })
-                if(this.alertUndefined != 0 && alreadyShown == false){
+               }
+               console.log("reslect:")
+               console.log(alertUndefined);
+               console.log(data.data.length)
+                if(corruptedData && alertUndefined == data.data.length && alreadyShown == false) {
+                  console.log(`${data.label}在此日期無資料`)
+                  console.log(data);
                   this.$buefy.notification.open({
                             type: 'is-warning',
                             position:'is-top',
@@ -696,14 +786,37 @@ export default {
                             message:`${data.label}在此日期無資料`,
                             hasIcon: true
                           })
+                    if(!this.bannedPlace.includes(data.label)){
+                      this.bannedPlace.push(data.label);
+                    }
                     alreadyShown = true;
+                    let indexSelOrder = this.nameToSelOrder(data.label);
+                    console.log("indexSelOrder:"+ indexSelOrder);
+                    let indexOfButton = this.selectedID[indexSelOrder];
+                    this.buttonType[indexOfButton] = undefined;
+                    console.log("disabling index:"+ indexSelOrder);
+                    this.selectedID.splice(indexSelOrder,1);
+                    this.selectedLoc.splice(indexSelOrder,1);
+                    this.chartData.datasets.splice(indexSelOrder,1);
+                    this.chartID--;
+                    this.ckey++
+                 }else if(corruptedData && alreadyShown == false){
+                  //  this.$buefy.notification.open({
+                  //    type: 'is-info',
+                  //    position:'is-bottom-right',
+                  //    pauseOnHover:true,
+                  //    message:`${data.label}在此日期可能有部分資料遺失。`,
+                  //    hasIcon: true
+                  //  })
+                  console.log(`${data.label}在此日期可能有部分資料遺失。`)
                  }
-              })
+              }
               this.chartData ={
                 ... this.chartData
               }
               this.chartID++;
-              this.ckey++
+              console.log("811 adding chartID:"+this.chartID)
+              // this.ckey++
               if(!reselect){
               this.isLoading=false
               this.showChart = true;
@@ -714,57 +827,69 @@ export default {
 
               }
     },
+    nameToSelOrder(name){
+      let index = this.selectedLoc.indexOf(name);
+      return index;
+    }
+    ,
     async clearChart(type){
-
-
       if(type == "all"){
-        this.clearToggle = false;
-        this.ckey= 0;
-        this.chartID=0;
         this.chartData.datasets = [];
         this.selectedLoc = [];
         this.selectedID = [];
-          this.buttonType.forEach((data,index)=>{
-          if(data== "is-info is-light")
+        for(let index in this.buttonType){
+          // 將之前選取過的按鈕更換成淡顏色，暫時取消
+          // if(data== "is-info is-light")
             this.buttonType[index]=undefined;
-          })
-        this.buttonType.forEach((data,index)=>{
-          if(data== "is-primary")
-            this.buttonType[index]="is-info is-light";
-          })
-                this.chartData ={
+          }
+        this.ckey++;
+        this.chartID=0;
+        // 將之前選取過的按鈕更換成淡顏色，暫時取消
+        // this.buttonType.forEach((data,index)=>{
+        //   if(data== "is-primary")
+        //     this.buttonType[index]="is-info is-light";
+        //   })
+        this.chartData ={
           ... this.chartData
         }
       }
-      if(type=='date' && (new Date(this.selectedDate).getTime() >= new Date(this.minDate).getTime()) && new Date(this.selectedDate).getTime()<= new Date(this.maxDate).getTime()){
+      if(type== 'date'){
+        // 重新執行selectedDate的監聽function
+       this.selectedDate = new Date(new Date(this.selectedDate).getTime()+1 );
+      this.selectedDate = new Date(new Date(this.selectedDate).getTime()-1 );
+
+      }
+    },
+    async onDateChange(){
+            if((new Date(this.selectedDate).getTime() >= new Date(this.minDate).getTime()) && new Date(this.selectedDate).getTime()<= new Date(this.maxDate).getTime()){
         if(new Date().getDate()!=new Date(this.selectedDate).getDate()){
-            this.showPredict = false
-            this.predict = false
+            this.showLastWeek = false
+            this.lastWeek = false;
           }else if(new Date().getHours()< 21){
               for(let ban of this.bannedDays){
                     if(`${new Date(ban).getMonth()}/${new Date(ban).getDate()}`==`${new Date(new Date(this.selectedDate).getDate())}/${new Date(this.selectedDate).getDate()}`){
-                      this.showPredict = false;
-                      this.predict = false;
+                      this.showLastWeek = false;
+                      this.lastWeek = false;
                 
                     break;
                     }else{
-                      this.showPredict = true;
+                      this.showLastWeek = true;
                     }
               }
           }else if(new Date().getHours()==21 && new Date().getMinutes() < 45){
               for(let ban of this.bannedDays){
                     if(`${new Date(ban).getMonth()}/${new Date(ban).getDate()}`==`${new Date(new Date(this.selectedDate).getDate()).getMonth()}/${new Date(this.selectedDate).getDate()}`){
-                      this.showPredict = false;
-                      this.predict = false
+                      this.showLastWeek = false;
+                      this.lastWeek = false
                     break;
                     }else{
-                      this.showPredict = true;
+                      this.showLastWeek = true;
                     }
               }
-          //this.showPredict = true;
+          //this.showLastWeek = true;
           }else{
-          this.showPredict = false;
-          this.predict = false
+          this.showLastWeek = false;
+          this.lastWeek = false
           }
       
 
@@ -783,7 +908,7 @@ export default {
         this.clearToggle = false
         this.showBtn=true;
         this.isLoading = false
-        this.showChart = false
+        // this.showChart = false
         let origIDArr=Array.from(this.selectedID);
         let origSelLocArr = Array.from(this.selectedLoc);
         this.selectedID = [];
@@ -795,7 +920,7 @@ export default {
           for (let button of origIDArr){
             this.progress+=random(0,5)
             this.loadingEl = `${origSelLocArr[index]}...（${index+1}/${origIDArr.length}）`
-           await this.selectLocation(origSelLocArr[index],button,true)
+           await this.onSelectLocation(origSelLocArr[index],button,true)
             //await timer(100)
             
             this.progress += divide;
@@ -1049,7 +1174,7 @@ canvas{
   }
 loading-content{
   height: 120px;
-  width:100px;
+  width:120px;
   position: absolute;
 }
 
