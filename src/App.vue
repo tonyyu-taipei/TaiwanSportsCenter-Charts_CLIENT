@@ -13,7 +13,7 @@
     </div>
     <div id="left" v-if=showSel>
       
-      <h1>明天健！</h1>
+      <h1>等等健！</h1>
       <b-field label="選擇日期">
         <span>
         <b-datepicker
@@ -44,6 +44,38 @@
         </div>
 
       </b-collapse>
+        <b-collapse class='panel' v-model="openC3" style="margin-top:-20px" animation="slide">
+    <template #trigger>
+            <div
+                class="panel-heading"
+                role="button"
+                @click="collapse(3)">
+                <strong>超核心</strong>
+            </div>
+    </template>
+    <div class='panel-block' style="">
+      <div class="btn-container">
+        <b-button v-for="(index, id) in locationHC" :key="id+locationsTwoWords.length" v-on:click="onSelectLocation('超核心'+index,id+locationsTwoWords.length)"  :type="buttonType[id+locationsTwoWords.length]" :disabled="showBtn" class="chart-btn" style="float:left">{{ index }}</b-button>
+      </div>
+    </div>
+
+  </b-collapse>
+        <b-collapse class='panel' v-model="openC4" style="margin-top:-20px" animation="slide">
+        <template #trigger>
+                <div
+                    class="panel-heading"
+                    role="button"
+                   @click="collapse(4)">
+                    <strong>Refine</strong>
+                </div>
+        </template>
+        <div class='panel-block' style="">
+          <div class="btn-container">
+            <b-button v-for="(index, id) in locationRF" :key="id+locationsTwoWords.length" v-on:click="onSelectLocation('Refine '+index,id+locationsTwoWords.length+locationHC.length)"  :type="buttonType[id+locationsTwoWords.length+locationHC.length]" :disabled="showBtn" class="chart-btn" style="float:left">{{ index }}</b-button>
+          </div>
+        </div>
+
+      </b-collapse>
       <b-collapse class='panel' v-model="openC2" style="margin-top:-20px" animation="slide">
         <template #trigger>
                 <div
@@ -55,7 +87,7 @@
         </template>
         <div class='panel-block' style="">
           <div class="btn-container">
-            <b-button v-for="(index, id) in locationsOthers" :key="id+locationsTwoWords.length" v-on:click="onSelectLocation(index,id+locationsTwoWords.length)"  :type="buttonType[id+locationsTwoWords.length]" :disabled="showBtn" class="chart-btn" style="float:left">{{ index }}</b-button>
+            <b-button v-for="(index, id) in locationsOthers" :key="id+locationsTwoWords.length" v-on:click="onSelectLocation(index,id+locationsTwoWords.length+locationHC.length+locationRF.length)"  :type="buttonType[id+locationsTwoWords.length+locationHC.length+locationRF.length]" :disabled="showBtn" class="chart-btn" style="float:left">{{ index }}</b-button>
           </div>
         </div>
 
@@ -72,18 +104,15 @@
                 ></b-icon></b-button>
         </transition>
                 </div>
-          <b-tooltip label="藉前週與現在資料差預測未來人數趨勢">
+          <b-tooltip label="將圖表加入前週時間之數量差。">
             <transition name="slide">
               <b-switch style="margin-top:1em;vertical-align:middle" v-model="lastWeek" v-if="showLastWeek" @input="toggleLastWeek()">前週資訊</b-switch>
             </transition>
           </b-tooltip><br>
           <b-switch style="margin-top:1em;vertical-align:middle" v-model="meme" v-show="!mobile" @input="toggleMeme()">迷因先生</b-switch>
           <transition name="fade">
-        <div id='bottom' v-show="!(openC1 || openC2) && windowHeight >= 420">
-           <a href="https://tonyyu.taipei" style="color: rgb(200,200,200)">Tony Yu </a>
-          <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">| 來源 </a>
-          <br>
-         <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">2025-08-18</a>
+        <div id='bottom' v-show="!(openC1 || openC2||openC3 || openC4) && windowHeight >= 420">
+          <a style="color:rgb(200,200,200);cursor:pointer" href="https://hackmd.io/@x9VPntxwQemm0h5ceTvAJw/rJrxViL0F">來源 | 2026-03-31</a>
     </div>
     </transition>
     </div>
@@ -156,6 +185,8 @@ export default {
       showLastWeek:false,
       openC1:false,
       openC2:false,
+      openC3:false,
+      openC4:false,
       lastWeek:false,
       refresh:false,
       dateChoose:true,
@@ -291,10 +322,28 @@ export default {
       }
       return res;
     },
+    locationHC:function(){
+      let res = []
+      for(let str of this.locations){
+        if(str.startsWith("超核心")){
+          res.push(str.replace("超核心",""))
+        }
+      }
+      return res;
+    },
+      locationRF:function(){
+      let res = []
+      for(let str of this.locations){
+        if(str.startsWith("Refine ")){
+          res.push(str.replace("Refine ",""))
+        }
+      }
+      return res;
+    },
     locationsOthers: function(){
       let res = [];
       for(let str of this.locations){
-        if (str.length >2){
+        if (str.length >2 && (!str.startsWith("超核心")&&!str.startsWith("Refine "))){
           res.push(str)
         }
       }
@@ -340,8 +389,20 @@ export default {
     collapse(id){
       if(id == 1){
         this.openC2 = false;
+        this.openC3 = false;
+        this.openC4 = false;
       }else if(id == 2){
         this.openC1 = false;
+        this.openC3 = false;
+        this.openC4 = false;
+      }else if(id == 3){
+        this.openC1 = false;
+        this.openC2 = false;
+        this.openC4 = false;
+      }else if(id == 4){
+        this.openC1 = false;
+        this.openC2 = false;
+        this.openC3 = false;
       }
     },
     checkBanned(days){
@@ -386,15 +447,16 @@ export default {
         if(this.selectedDate.getDate() == this.maxDate.getDate() && this.selectedDate.getHours() < 6){
           this.selectedDate = new Date(this.selectedDate.getDate()-1)
         }
-        if(new Date().getDate() == this.selectedDate.getDate()){
-          if(new Date().getHours() <= 21 && new Date().getHours()>=6){
-            if(new Date().getMinutes() < 45 && new Date().getHours() == 21){
-                        this.showLastWeek = true;
-            }else if(new Date().getHours() != 21){
-                       this.showLastWeek = true;   
-            }
-          }
-        }
+        //設定可前週情形時間
+        const now = new Date();
+        const isSameDate = now.toDateString() === new Date(this.selectedDate).toDateString();
+        const hour = now.getHours();
+        const minute = now.getMinutes();
+
+        this.showLastWeek =
+          isSameDate &&
+          hour >= 6 &&
+          (hour < 21 || (hour === 21 && minute < 45));
         for(let time of res.data){
           this.allDate.push(time);
         }
@@ -993,10 +1055,10 @@ body{
   margin-top: 60px;
 
 }
-html{
-background: linear-gradient(90deg, rgba(170,102,232,1) 0%, rgba(0,61,124,1) 100%);
-
-}
+  html {
+    background-color: #222222;
+    color: #ffffff;
+  }
 @media (min-width:1108px){
   #app{
     display:inline;
@@ -1106,6 +1168,11 @@ background: linear-gradient(90deg, rgba(170,102,232,1) 0%, rgba(0,61,124,1) 100%
 }
 canvas{
   color:white
+}
+@media (prefers-color-scheme:dark){
+  canvas{
+    color:#222222
+  } 
 }
 #options{
   margin-top:1em;display:block;margin-left:auto;margin-right:auto;
